@@ -1,6 +1,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hello, Mãe!</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0A6B6B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hello, Mãe">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
@@ -595,6 +603,8 @@ function home(){
       <button class="btn wa" data-act="callGui">💬 Mandar mensagem para o ${esc(GUI)}</button>
     </section>
 
+    ${installCard()}
+
     <section class="card">
       <div class="card-row">
         <span class="nc-emoji" style="background:var(--sun-soft)" aria-hidden="true">📋</span>
@@ -634,6 +644,7 @@ function home(){
     <footer class="home-foot">
       <button class="btn ghost" data-act="feedback" data-kind="geral" data-title="Tela inicial">💬 Mandar um comentário sobre o app</button>
       <button class="linkbtn" data-act="rename">Trocar nome</button>
+      <button class="linkbtn" data-act="openAdmin">Área do ${esc(GUI)}</button>
     </footer>
   </div>`);
 }
@@ -1103,6 +1114,33 @@ function callGui(){
   setTimeout(() => { if (el.isConnected) location.href = url; }, 1800);
 }
 
+/* ---------- Instalar como app ---------- */
+
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); installEvt = e;
+  if (!L && !R && !G && $('.home')) home();
+});
+window.addEventListener('appinstalled', () => { installEvt = null; toast('App instalado! Procure o ícone na tela inicial.'); });
+
+function installCard(){
+  if (isStandalone()) return '';
+  const row = `<div class="card-row"><img class="av av-s" src="icons/icon-192.png" alt="" width="192" height="192">
+    <div><h2>Instalar o app no celular</h2><p>Ganha um ícone na tela inicial e funciona até sem internet, no avião.</p></div></div>`;
+  if (installEvt) return `<section class="card">${row}<button class="btn primary" data-act="install">Instalar agora</button></section>`;
+  if (isIOS) return `<section class="card">${row}
+    <ul class="checks"><li>Abra este site no <b>Safari</b></li><li>Toque no botão <b>Compartilhar</b> (o quadrado com a setinha para cima)</li><li>Escolha <b>Adicionar à Tela de Início</b></li></ul></section>`;
+  if (/Android/.test(navigator.userAgent)) return `<section class="card">${row}
+    <ul class="checks"><li>Abra este site no <b>Google Chrome</b></li><li>Toque nos <b>três pontinhos</b>, no canto de cima</li><li>Escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b></li></ul></section>`;
+  return '';
+}
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 /* ---------- Área do administrador (#admin) ---------- */
 
 function admin(){
@@ -1324,7 +1362,14 @@ const ACT = {
   sendfb(b){ sendFeedback(b.closest('.fbcard')); },
   callGui,
   closeCalling(){ $$('.calling').forEach(e => e.remove()); },
-  leaveAdmin(){ history.replaceState(null, '', location.pathname); home(); }
+  leaveAdmin(){ history.replaceState(null, '', location.pathname); home(); },
+  openAdmin(){ history.replaceState(null, '', '#admin'); admin(); },
+  async install(){
+    if (!installEvt) return;
+    installEvt.prompt();
+    await installEvt.userChoice.catch(() => {});
+    installEvt = null; home();
+  }
 };
 
 function drawLine(st){

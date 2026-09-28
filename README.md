@@ -17,6 +17,17 @@ App de inglês (nível B1) feito para a minha mãe se preparar para a viagem à 
 - **Falar com o Gui:** abre o WhatsApp com a animação do telefone
 - **Comentários:** ao fim de cada etapa, história e jogo, e pelo botão 💬 em qualquer exercício
 
+## Instalar como app
+
+O Hello, Mãe! é um app instalável (PWA): ganha ícone na tela inicial, abre em tela cheia e **funciona sem internet** (as lições, os 205 áudios e as animações ficam guardados no celular, cerca de 6 MB).
+
+- **Android:** abra o link no Google Chrome. Aparece o cartão "Instalar o app no celular" na tela inicial do app; toque em **Instalar agora**. (Ou: três pontinhos → Instalar app.)
+- **iPhone:** abra o link no **Safari** → botão Compartilhar → **Adicionar à Tela de Início**.
+
+Depois de instalar, entre pelo ícone e configure o WhatsApp em **Área do Gui** (no rodapé da tela inicial). No iPhone, o app instalado tem uma memória separada do Safari, então configure por dentro do app.
+
+Atualizações: basta fazer push. O app baixa a versão nova em segundo plano e mostra na próxima vez que for aberto. Se mudar a lista de arquivos fixos do `sw.js`, aumente o `VERSION` dele.
+
 ## Arquivos
 
 | Arquivo | O que é |
@@ -26,6 +37,7 @@ App de inglês (nível B1) feito para a minha mãe se preparar para a viagem à 
 | `config.js` | Número do WhatsApp e endereço da planilha de comentários |
 | `audio/` | Um MP3 por frase, com voz neural |
 | `img/` | Avatares animados (WebP) e versões paradas (PNG) |
+| `manifest.webmanifest`, `sw.js`, `icons/` | O que transforma o site em app instalável e offline |
 | `tools/build-audio.mjs` | Gera os MP3 que faltam e apaga os que não são mais usados |
 | `tools/feedback-apps-script.gs` | Script da planilha que recebe os comentários |
 
