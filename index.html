@@ -301,6 +301,12 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 .rep .rq{font-size:.85rem;color:var(--muted)}
 .rep .ra{font-weight:700}
 
+/* Abertura do app */
+.splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;transition:opacity .45s ease,visibility .45s}
+.splash img{width:min(62vw,260px);height:auto;aspect-ratio:1;border-radius:22%}
+.splash p{font-family:var(--f-display);font-weight:800;font-size:2.2rem;line-height:1;color:var(--brand)}
+.splash.out{opacity:0;visibility:hidden}
+
 /* Lista da viagem */
 .chk{display:flex;align-items:flex-start;gap:14px;width:100%;text-align:left;padding:14px;border-radius:16px;border:2px solid var(--line);background:var(--surface);min-height:62px}
 .chk .box{width:30px;height:30px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-weight:800}
@@ -321,6 +327,10 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 }
 </style>
 
+<div id="splash" class="splash" aria-hidden="true">
+  <img id="splash-img" src="img/telefone.webp" alt="" width="240" height="240">
+  <p>Hello, Mãe!</p>
+</div>
 <div id="app"></div>
 
 <script src="config.js"></script>
@@ -1403,6 +1413,17 @@ document.addEventListener('submit', e => {
   S.name = v; save(); home();
 });
 window.addEventListener('hashchange', () => { if (location.hash === '#admin') admin(); });
+
+// Abertura: animação do telefone por uns 2 segundos (toque para pular)
+(function splash(){
+  const el = $('#splash');
+  if (!el) return;
+  if (reduceMotion) $('#splash-img').src = 'img/telefone.png';
+  const hide = () => { el.classList.add('out'); setTimeout(() => el.remove(), 500); };
+  if (location.hash === '#admin') return el.remove();
+  el.addEventListener('click', hide);
+  setTimeout(hide, 2200);
+})();
 
 flushOutbox();
 if (location.hash === '#admin') admin();
