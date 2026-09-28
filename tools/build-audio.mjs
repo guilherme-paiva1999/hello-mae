@@ -78,3 +78,12 @@ const all = fs.readdirSync(outDir).filter(f => f.endsWith('.mp3')).map(f => f.sl
 fs.writeFileSync(path.join(outDir, 'index.js'),
   '// Gerado por tools/build-audio.mjs. Não edite à mão.\nwindow.HM_AUDIO = ' + JSON.stringify(all, null, 0) + ';\n');
 console.log(`Pronto: ${all.length} áudios em audio/.`);
+
+// Muda a versão do sw.js quando a lista de áudios muda, para o app instalado
+// baixar os áudios novos e continuar funcionando sem internet.
+const swFile = path.join(root, 'sw.js');
+let h = 5381;
+for (const c of all.join('|')) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+const sw = fs.readFileSync(swFile, 'utf8');
+const next = sw.replace(/const AUDIO_VERSION = '[^']*';/, `const AUDIO_VERSION = '${h.toString(36)}';`);
+if (next !== sw){ fs.writeFileSync(swFile, next); console.log('sw.js atualizado: o app vai baixar os áudios novos.'); }

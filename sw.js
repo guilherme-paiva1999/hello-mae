@@ -3,9 +3,11 @@
    - Telas e conteúdo (index.html, content.js...): abre o que está guardado e busca a versão
      nova em segundo plano. Uma atualização no GitHub aparece na próxima vez que ela abrir.
    - Áudios, imagens e fontes: usa o que está guardado; se faltar, baixa e guarda.
-   Mudou a lista de arquivos fixos abaixo? Aumente VERSION. */
+   Mudou a lista de arquivos fixos abaixo? Aumente VERSION.
+   AUDIO_VERSION é atualizado sozinho pelo tools/build-audio.mjs. */
 
 const VERSION = 'v2';
+const AUDIO_VERSION = '17dqgqd';
 const CORE = `hello-mae-core-${VERSION}`;
 const MEDIA = 'hello-mae-media';
 
