@@ -31,7 +31,7 @@ App de inglês (nível B1) feito para a minha mãe se preparar para a viagem à 
 
 ## Configurar o WhatsApp
 
-Em `config.js`, preencha `whatsapp` com o número completo, só com dígitos (ex.: `5511912345678`). Como o repositório é público, o número fica visível no GitHub.
+O número **não** fica no repositório. No celular dela, abra o app com `#admin` no fim do endereço e salve o número em "WhatsApp do Gui". Ele fica guardado só naquele aparelho.
 
 ## Configurar a planilha de comentários (uns 5 minutos)
 

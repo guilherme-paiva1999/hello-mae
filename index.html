@@ -1087,9 +1087,12 @@ window.addEventListener('online', flushOutbox);
 
 /* ---------- Falar com o Gui ---------- */
 
+// O número fica salvo só neste aparelho (nunca no GitHub). Configura-se em #admin.
+function waNumber(){ try { return localStorage.getItem('hello-mae-wa') || ''; } catch(e){ return ''; } }
+
 function callGui(){
-  const num = String(CFG.whatsapp || '').replace(/\D/g, '');
-  if (!num){ toast(`O número do ${esc(GUI)} ainda não foi configurado.`); return; }
+  const num = waNumber();
+  if (!num){ toast(`O número do ${esc(GUI)} ainda não foi configurado neste celular.`); return; }
   const url = `https://wa.me/${num}?text=${encodeURIComponent(`Oi ${GUI}! Estou no app de inglês e queria falar com você.`)}`;
   const el = document.createElement('div');
   el.className = 'calling'; el.setAttribute('role','status');
@@ -1115,6 +1118,13 @@ function admin(){
       </form>
       <div id="adm-list" class="sec"></div>`
     : `<div class="alert">A planilha de comentários ainda não foi configurada. Veja o passo a passo no README do projeto.</div>`}
+    <form id="f-wa" class="card">
+      <h2>WhatsApp do ${esc(GUI)}</h2>
+      <p>Fica salvo só neste celular, não vai para o GitHub. Configure no celular dela.</p>
+      <label for="wa" class="hint">Número com código do país, ex.: +351 912 345 678</label>
+      <input type="text" id="wa" inputmode="tel" autocomplete="off" value="${waNumber() ? '+' + esc(waNumber()) : ''}">
+      <button class="btn secondary" type="submit">Salvar número</button>
+    </form>
     <section class="sec">
       <h3>Neste aparelho</h3>
       <p class="sec-sub">${S.outbox.length ? `${S.outbox.length} comentário(s) esperando internet para enviar.` : 'Todos os comentários daqui já foram enviados.'} Progresso: ${progressText()}.</p>
@@ -1337,6 +1347,11 @@ document.addEventListener('input', e => {
 document.addEventListener('submit', e => {
   e.preventDefault();
   if (e.target.id === 'f-admin') return loadAdmin($('#akey').value.trim());
+  if (e.target.id === 'f-wa'){
+    const num = $('#wa').value.replace(/\D/g, '');
+    try { num ? localStorage.setItem('hello-mae-wa', num) : localStorage.removeItem('hello-mae-wa'); } catch(err){}
+    return toast(num ? 'Número salvo neste celular.' : 'Número apagado deste celular.');
+  }
   if (e.target.id !== 'f-name') return;
   const v = $('#nm').value.trim();
   if (!v){ $('#nm-err').hidden = false; $('#nm').focus(); return; }
