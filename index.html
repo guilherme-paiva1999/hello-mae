@@ -504,7 +504,22 @@ function render(html){
   $$('.toast,.modal,.sheet').forEach(e => e.remove());
   if (G && G.timer){ clearInterval(G.timer); G.timer = null; }
   app.innerHTML = html; window.scrollTo(0,0);
+  if (!app.querySelector('.home, .welcome')) trapBack();
 }
+
+// Botão/gesto de voltar do Android: fora da tela inicial, ele volta dentro do app
+// (exercício anterior ou tela inicial) em vez de fechar.
+function trapBack(){ try { if (!(history.state && history.state.hm)) history.pushState({hm: 1}, ''); } catch(e){} }
+window.addEventListener('popstate', () => {
+  if (location.hash === '#admin') return;
+  if ($('.calling, .modal')){ $$('.calling, .modal').forEach(e => e.remove()); return trapBack(); }
+  if (L && L.i > 0) return ACT.back();
+  if (!$('.home')) home();
+});
+// Voltou do WhatsApp: tira a tela "Chamando o Gui..."
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') setTimeout(() => $$('.calling').forEach(e => e.remove()), 600);
+});
 const primary = (label, act, extra='') => `<button class="btn primary" data-act="${act}" ${extra}>${label}</button>`;
 
 function audioRow(text, v){
@@ -557,7 +572,20 @@ function home(){
   const checked = CHECKLIST.filter(c => S.check[c.id]).length;
   const starHtml = n => `<span class="stars" aria-label="${n} de 3 estrelas">${[1,2,3].map(i => `<span class="${i<=n?'':'off'}">★</span>`).join('')}</span>`;
 
-  const nextCard = next ? `
+  const rs = S.resume, rItem = rs && (rs.kind === 'stage' ? STAGES : STORIES).find(x => x.id === rs.id);
+  const resumeCard = rItem ? `
+    <section class="next-card">
+      <div class="eyebrow">Continuar de onde parou</div>
+      <div class="nc-row">
+        <span class="nc-emoji" aria-hidden="true">${rItem.emoji}</span>
+        <div><h2>${rItem.title}</h2><p>Exercício ${rs.i + 1} de ${rs.total}</p></div>
+      </div>
+      <div class="meter" style="background:rgba(255,255,255,.25)" aria-hidden="true"><span style="width:${Math.round(rs.i / rs.total * 100)}%;background:var(--sun)"></span></div>
+      ${primary('Continuar', rs.kind, `data-id="${rItem.id}"`)}
+      <button class="linkbtn" style="color:inherit" data-act="resetResume">Começar do zero</button>
+    </section>` : '';
+
+  const nextCard = resumeCard || (next ? `
     <section class="next-card">
       <div class="eyebrow">${nextIdx === 0 ? 'Comece por aqui' : 'Continue sua viagem'}</div>
       <div class="nc-row">
@@ -571,7 +599,7 @@ function home(){
       <h2>Você fez todas as etapas da viagem.</h2>
       <p>Agora treine no simulador de imigração e revise as frases até o dia do embarque.</p>
       ${primary('Treinar a imigração', 'interview')}
-    </section>`;
+    </section>`);
 
   const path = STAGES.map((s, i) => {
     const d = S.done[s.id], state = d ? 'done' : i === nextIdx ? 'current' : '';
@@ -825,19 +853,38 @@ const STEP = {
   }
 };
 
+// Etapas e histórias guardam onde ela parou, para continuar depois
+const RESUMABLE = ['stage', 'story'];
+// Cópia do exercício sem o estado da tela (respostas, embaralhamento...)
+function clean(st){ const c = {}; for (const k in st) if (k[0] !== '_' || k === '_tries') c[k] = st[k]; return c; }
+
 // ctx: {kind, id, title}. Tipos: stage, story, interview, dictation, spot
 function startRun(ctx, steps){
-  L = {ctx, queue: steps.map(s => ({...s})), i:0, mistakes:0, right:0};
+  const r = S.resume;
+  const canResume = r && RESUMABLE.includes(ctx.kind) && r.kind === ctx.kind && r.id === ctx.id
+    && r.base === steps.length && Array.isArray(r.queue) && r.i < r.queue.length;
+  L = canResume
+    ? {ctx, base: steps.length, queue: r.queue.map(s => ({...s})), i: r.i, mistakes: r.mistakes || 0, right: r.right || 0}
+    : {ctx, base: steps.length, queue: steps.map(s => ({...s})), i: 0, mistakes: 0, right: 0};
   renderStep();
 }
 
+function saveResume(){
+  if (!L || !RESUMABLE.includes(L.ctx.kind)) return;
+  S.resume = {kind: L.ctx.kind, id: L.ctx.id, base: L.base, i: L.i, total: L.queue.length,
+    mistakes: L.mistakes, right: L.right, queue: L.queue.map(clean)};
+  save();
+}
+
 function renderStep(){
+  saveResume();
   const st = cur();
   const r = STEP[st.t](st);
   const pct = Math.round(L.i / L.queue.length * 100);
   render(`<div class="screen lesson">
     <header class="lbar">
       <button class="icon-btn" data-act="quit" aria-label="Sair">✕</button>
+      ${L.i > 0 ? '<button class="icon-btn" data-act="back" aria-label="Voltar ao exercício anterior">←</button>' : ''}
       <div class="pbar" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
       <button class="icon-btn" data-act="feedback" data-step="1" aria-label="Comentar este exercício">💬</button>
     </header>
@@ -915,6 +962,7 @@ function finishScreen({mood='feliz', stars, title, msg, facts=[], extra='', agai
 
 function finishRun(){
   const ctx = L.ctx, streakFacts = () => { const s = currentStreak() || 1; return [s, s === 1 ? 'dia seguido' : 'dias seguidos']; };
+  if (S.resume && S.resume.kind === ctx.kind && S.resume.id === ctx.id) S.resume = null;
   if (ctx.kind === 'stage' || ctx.kind === 'story'){
     const stars = L.mistakes <= 1 ? 3 : L.mistakes <= 3 ? 2 : 1;
     const prev = S.done[ctx.id] ? S.done[ctx.id].stars : 0;
@@ -1114,10 +1162,14 @@ function waNumber(){ try { return localStorage.getItem('hello-mae-wa') || ''; } 
 function callGui(){
   const num = waNumber();
   if (!num){ toast(`O número do ${esc(GUI)} ainda não foi configurado neste celular.`); return; }
-  const url = `https://wa.me/${num}?text=${encodeURIComponent(`Oi ${GUI}! Estou no app de inglês e queria falar com você.`)}`;
+  // A mensagem leva o link do app: na conversa, ela toca nele para voltar
+  const appLink = location.origin + location.pathname;
+  const msg = `Oi ${GUI}! Estou no app de inglês e queria falar com você.\n\nPara voltar ao app, toque aqui: ${appLink}`;
+  const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   const el = document.createElement('div');
   el.className = 'calling'; el.setAttribute('role','status');
   el.innerHTML = `${avatar('telefone','l','ring')}<h2>Chamando o ${esc(GUI)}...</h2><p>Abrindo o WhatsApp</p>
+    <p>Para voltar, toque no link do app que vai junto na mensagem.</p>
     <a class="btn wa" href="${url}" target="_blank" rel="noopener">Abrir o WhatsApp agora</a>
     <button class="btn ghost" data-act="closeCalling">Voltar</button>`;
   document.body.appendChild(el);
@@ -1224,12 +1276,20 @@ const ACT = {
     L.i++;
     if (L.i >= L.queue.length) finishRun(); else renderStep();
   },
+  back(){
+    if (!L || L.i === 0) return;
+    tts.stop();
+    L.i--;
+    L.queue[L.i] = clean(L.queue[L.i]);   // o exercício volta "novo", para responder de novo
+    renderStep();
+  },
+  resetResume(){ S.resume = null; save(); home(); },
   quit(){
     const m = document.createElement('div');
     m.className = 'modal';
     m.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mt">
       <h2 id="mt">Quer mesmo sair?</h2>
-      <p>Se sair agora, este exercício começa do zero na próxima vez.</p>
+      <p>${RESUMABLE.includes(L.ctx.kind) ? 'Pode sair tranquila: na tela inicial, toque em <b>Continuar</b> para voltar exatamente daqui.' : 'Se sair agora, este jogo começa do zero na próxima vez.'}</p>
       ${primary('Continuar', 'closeModal')}
       <button class="btn ghost" data-act="home">Sair</button>
     </div>`;
