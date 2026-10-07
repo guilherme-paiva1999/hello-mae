@@ -161,6 +161,8 @@ textarea{resize:vertical;min-height:96px}
 .lbar{display:flex;align-items:center;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:5}
 .icon-btn{width:48px;height:48px;border-radius:50%;border:0;background:transparent;font-size:1.4rem;color:var(--muted);flex:none;display:grid;place-items:center}
 .icon-btn:first-child{margin-left:-8px}
+.back-pill{flex:none;min-height:44px;padding:6px 14px;border-radius:99px;border:2px solid var(--brand);background:var(--brand-soft);color:var(--brand-deep);font-family:var(--f-display);font-weight:700;font-size:1rem;line-height:1}
+.back-pill:active{transform:translateY(2px)}
 .pbar{flex:1;height:16px;background:var(--line);border-radius:99px;overflow:hidden}
 .pbar span{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .4s ease}
 .pbar.timer span{background:var(--sun);transition:width 1s linear}
@@ -959,7 +961,7 @@ function renderStep(){
   render(`<div class="screen lesson">
     <header class="lbar">
       <button class="icon-btn" data-act="quit" aria-label="Sair">✕</button>
-      ${L.i > 0 ? '<button class="icon-btn" data-act="back" aria-label="Voltar ao exercício anterior">←</button>' : ''}
+      ${L.i > 0 ? '<button class="back-pill" data-act="back" aria-label="Voltar ao exercício anterior">← Voltar</button>' : ''}
       <div class="pbar" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
       <button class="icon-btn" data-act="feedback" data-step="1" aria-label="Comentar este exercício">💬</button>
     </header>
