@@ -19,24 +19,28 @@ const outDir = path.join(root, 'audio');
 
 const VOICE_F = 'en-US-AvaNeural';     // voz principal (ela, palavras, explicações)
 const VOICE_M = 'en-US-AndrewNeural';  // voz masculina (oficial, atendentes...)
+const VOICE_PT = 'pt-BR-FranciscaNeural'; // opções de resposta em português
 const RATE = '-10%';                   // um pouco mais devagar que o normal, para quem está aprendendo
 
 const sandbox = {window: {}};
 vm.runInNewContext(fs.readFileSync(path.join(root, 'content.js'), 'utf8'), sandbox);
 const newsFile = path.join(root, 'news.js');
 if (fs.existsSync(newsFile)) vm.runInNewContext(fs.readFileSync(newsFile, 'utf8'), sandbox);
-const {slug, strip, ...content} = sandbox.window.HM;
+const {slug, strip, optLang, ...content} = sandbox.window.HM;
 content.NEWS = sandbox.window.HM_NEWS || [];
 
 const jobs = new Map(); // nome do arquivo -> {text, voice}
-function add(text, male = false){
+// Arquivos: frase.mp3 (inglês), frase.m.mp3 (inglês, voz masculina), frase.pt.mp3 (português)
+function add(text, male = false, lang = 'en'){
   if (!text) return;
   // Palavras destacadas nos textos ([[palavra|tradução]]) também ganham áudio
-  for (const m of String(text).matchAll(/\[\[([^|\]]+)\|/g)) add(m[1]);
+  if (lang === 'en') for (const m of String(text).matchAll(/\[\[([^|\]]+)\|/g)) add(m[1]);
   const t = strip(text).replace(/\.\.\./g, '').trim();
-  const key = slug(t) + (male ? '.m' : '');
-  if (!jobs.has(key)) jobs.set(key, {text: t, voice: male ? VOICE_M : VOICE_F});
+  if (!slug(t)) return;
+  const key = slug(t) + (lang === 'pt' ? '.pt' : male ? '.m' : '');
+  if (!jobs.has(key)) jobs.set(key, {text: t, voice: lang === 'pt' ? VOICE_PT : male ? VOICE_M : VOICE_F});
 }
+const addPt = text => add(text, false, 'pt');
 
 // Toda frase em inglês fica num campo "en". v:'m' marca voz masculina e vale para
 // tudo dentro do objeto, menos as "choices" (que são falas dela, voz feminina).
@@ -48,6 +52,24 @@ function walk(o, v){
   for (const [k, val] of Object.entries(o)) if (typeof val === 'object') walk(val, k === 'choices' ? undefined : mine);
 }
 walk(content);
+
+// Opções de resposta: o app lê em voz alta a opção que ela toca
+function options(st){
+  if (st.t === 'choice' || st.t === 'listen' || st.t === 'fill')
+    (st.options || []).forEach(o => optLang(st) === 'pt' ? addPt(o) : add(o));
+  if (st.t === 'build') [...(st.answer || []), ...(st.extra || [])].forEach(w => add(w));
+  if (st.t === 'match') (st.pairs || []).forEach(([en, pt]) => { add(en); addPt(pt); });
+  if (st.t === 'dialog') (st.nodes || []).forEach(n => n.choices.forEach(c => c.en ? add(c.en) : addPt(c.pt)));
+}
+content.STAGES.forEach(s => s.steps.forEach(options));
+content.STORIES.forEach(s => s.questions.forEach(options));
+content.NEWS.forEach(n => n.questions.forEach(options));
+const I = content.INTERVIEW;
+options({t:'dialog', nodes:[I.start, ...I.core, ...I.extra, ...I.end]});
+content.SPOT.forEach(s => s.s.split(' ').forEach(w => add(w)));
+// Jogo Contra o tempo: as opções são os significados em português
+content.EXTRA_PAIRS.forEach(([, pt]) => addPt(pt));
+content.STAGES.forEach(s => s.steps.forEach(st => { if (st.t === 'phrase') addPt(st.pt); }));
 
 // Frases fixas da tela inicial
 ['Good morning', 'Good afternoon', 'Good evening', "Hello! Welcome! Let's practise English for your trip."].forEach(t => add(t));

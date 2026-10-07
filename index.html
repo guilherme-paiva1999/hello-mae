@@ -351,7 +351,7 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 <script>
 (function(){
 document.documentElement.lang = 'pt-BR';
-const {STAGES, SOON, STORIES, STORIES_SOON, INTERVIEW, DICTATION, SPOT, EXTRA_PAIRS, CHECKLIST, strip, slug} = window.HM;
+const {STAGES, SOON, STORIES, STORIES_SOON, INTERVIEW, DICTATION, SPOT, EXTRA_PAIRS, CHECKLIST, strip, slug, optLang} = window.HM;
 const CFG = window.HM_CONFIG || {};
 const AUDIO = new Set(window.HM_AUDIO || []);
 const NEWS = window.HM_NEWS || [];
@@ -464,10 +464,14 @@ const tts = {
     const us = en.filter(v => /en[-_]US/i.test(v.lang));
     this.voice = us.find(v => /google|samantha|natural|aria|jenny|ava/i.test(v.name)) || us[0] || en[0] || null;
     this.altVoice = en.find(v => v !== this.voice && /en[-_](GB|AU)/i.test(v.lang)) || null;
+    const pt = speechSynthesis.getVoices().filter(v => /^pt/i.test(v.lang));
+    this.ptVoice = pt.find(v => /pt[-_]BR/i.test(v.lang)) || pt[0] || null;
   },
-  // Arquivo MP3 gravado com voz neural, se existir. Voz masculina termina em ".m".
-  file(text, male){
+  // Arquivo MP3 gravado com voz neural, se existir.
+  // Voz masculina termina em ".m"; português termina em ".pt".
+  file(text, male, lang){
     const s = slug(text);
+    if (lang === 'pt') return AUDIO.has(s + '.pt') ? 'audio/' + s + '.pt.mp3' : null;
     if (male && AUDIO.has(s + '.m')) return 'audio/' + s + '.m.mp3';
     if (AUDIO.has(s)) return 'audio/' + s + '.mp3';
     return null;
@@ -484,7 +488,7 @@ const tts = {
       if (run !== this.run || i >= list.length) return;
       const it = list[i], next = () => step(i + 1);
       if (it.el) it.el.classList.add('playing');
-      const src = this.file(it.text, it.alt);
+      const src = this.file(it.text, it.alt, it.lang);
       if (src){
         const a = this.player;
         a.src = src;
@@ -500,14 +504,14 @@ const tts = {
   device(it, next){
     if (!this.ok) { toast('Este aparelho não conseguiu tocar o áudio. Tente abrir o link no <b>Google Chrome</b>.'); return; }
     const u = new SpeechSynthesisUtterance(strip(it.text));
-    u.lang = 'en-US';
-    const v = it.alt && this.altVoice ? this.altVoice : this.voice;
+    u.lang = it.lang === 'pt' ? 'pt-BR' : 'en-US';
+    const v = it.lang === 'pt' ? this.ptVoice : it.alt && this.altVoice ? this.altVoice : this.voice;
     if (v) u.voice = v;
     u.rate = it.slow ? 0.6 : 0.9;
     u.onend = next;
     setTimeout(() => speechSynthesis.speak(u), 60);
   },
-  say(text, o={}){ this.play([{text, slow:o.slow, alt:o.alt}]); },
+  say(text, o={}){ this.play([{text, slow:o.slow, alt:o.alt, lang:o.lang}]); },
   stop(){ this.run++; this.player.pause(); if (this.ok) speechSynthesis.cancel(); }
 };
 if (tts.ok){ tts.pick(); speechSynthesis.onvoiceschanged = () => tts.pick(); }
@@ -798,7 +802,7 @@ const STEP = {
         <p class="build-pt">${st.pt}</p>
         <div class="build-line" id="line" aria-label="Sua frase" lang="en"></div>
         <p class="hint">Toque nas palavras na ordem certa. Para tirar uma palavra, toque nela de novo.</p>
-        <div class="bank" id="bank" lang="en">${st._tiles.map(t => `<button class="tile" data-act="tile" data-id="${t.id}">${esc(t.w)}</button>`).join('')}</div>`,
+        <div class="bank" id="bank" lang="en">${st._tiles.map(t => `<button class="tile" data-act="tile" data-id="${t.id}" data-say="${esc(t.w)}">${esc(t.w)}</button>`).join('')}</div>`,
       footer: primary('Verificar', 'checkBuild', 'id="chk" disabled')
     };
   },
@@ -810,8 +814,8 @@ const STEP = {
       html:`${thinking('Ligue os pares')}
         <h2 class="q">Toque numa palavra em inglês e depois no significado.</h2>
         <div class="match">
-          <div class="mcol" lang="en">${st._L.map(x => `<button class="mt" data-act="mt" data-side="L" data-i="${x.i}">${esc(x.t)}</button>`).join('')}</div>
-          <div class="mcol">${st._R.map(x => `<button class="mt" data-act="mt" data-side="R" data-i="${x.i}">${esc(x.t)}</button>`).join('')}</div>
+          <div class="mcol" lang="en">${st._L.map(x => `<button class="mt" data-act="mt" data-side="L" data-i="${x.i}" data-say="${esc(x.t)}">${esc(x.t)}</button>`).join('')}</div>
+          <div class="mcol">${st._R.map(x => `<button class="mt" data-act="mt" data-side="R" data-i="${x.i}" data-say="${esc(x.t)}" data-lang="pt">${esc(x.t)}</button>`).join('')}</div>
         </div>`
     };
   },
@@ -987,7 +991,11 @@ function answer(ok, o={}){
     }
   }
   sheet(ok, o);
-  if (o.say) setTimeout(() => tts.say(o.say, {alt: o.alt}), 450);
+  // Lê a opção que ela tocou e, depois, a frase certa em inglês (se for diferente)
+  const list = [];
+  if (o.pre) list.push(o.pre);
+  if (o.say && !(o.pre && slug(o.pre.text) === slug(o.say))) list.push({text: o.say, alt: o.alt});
+  if (list.length) setTimeout(() => tts.play(list), 300);
 }
 
 function sheet(ok, o={}){
@@ -1413,7 +1421,8 @@ const ACT = {
     if (!x.ok) $$('.opt').forEach((el,i) => { if (st._opts[i].ok) el.classList.add('is-good'); });
     if (st.t === 'fill'){ const bl = $('#blank'); bl.textContent = x.o; bl.classList.add(x.ok ? 'good' : 'bad'); }
     const say = st.t === 'fill' || st.t === 'listen' || st.en ? st.en : null;
-    answer(x.ok, {correct: esc(st.t === 'fill' ? st.en : st.options[0]), why: st.why, say, alt: st.t === 'listen' && st.v === 'm'});
+    answer(x.ok, {correct: esc(st.t === 'fill' ? st.en : st.options[0]), why: st.why, say, alt: st.t === 'listen' && st.v === 'm',
+      pre: {text: x.o, lang: optLang(st)}});
   },
   tile(b){
     const st = cur(), id = +b.dataset.id;
@@ -1467,7 +1476,7 @@ const ACT = {
     const words = $$('.sw');
     words[st.w].classList.add('hit');
     if (!ok) b.classList.add('miss');
-    answer(ok, {correct: esc(st.en), say: st.en, why: st.why});
+    answer(ok, {correct: esc(st.en), say: st.en, why: st.why, pre: {text: b.textContent}});
   },
   dpick(b){
     const st = cur(), node = st.nodes[st._k], c = node.choices[+b.dataset.i];
@@ -1478,7 +1487,7 @@ const ACT = {
     st._last = c; st._phase = 'fb';
     chime(c.q !== 'bad');
     renderStep();
-    if (c.en) setTimeout(() => tts.say(c.en), 400);
+    setTimeout(() => c.en ? tts.say(c.en) : tts.say(c.pt, {lang: 'pt'}), 400);
   },
   dretry(){ const st = cur(); st._hist.pop(); st._phase = 'ask'; st._opts = null; renderStep(); },
   dnext(){
@@ -1501,6 +1510,7 @@ const ACT = {
   tpick(b){
     if (!G || G.busy) return;
     const o = G.q.opts[+b.dataset.i];
+    tts.say(o.t, {lang: 'pt'});
     b.classList.add(o.ok ? 'is-good' : 'is-bad');
     if (o.ok){ G.score++; tone([[740,0],[988,0.08]]); }
     else { tone([[300,0,'triangle']]); $$('.opt').forEach((el,i) => { if (G.q.opts[i].ok) el.classList.add('is-good'); }); }
@@ -1556,14 +1566,14 @@ const ACT = {
 function drawLine(st){
   $('#line').innerHTML = st._placed.map(id => {
     const t = st._tiles.find(x => x.id === id);
-    return `<button class="tile" data-act="untile" data-id="${id}">${esc(t.w)}</button>`;
+    return `<button class="tile" data-act="untile" data-id="${id}" data-say="${esc(t.w)}">${esc(t.w)}</button>`;
   }).join('');
   $('#chk').disabled = !st._placed.length;
 }
 
 document.addEventListener('click', e => {
   const s = e.target.closest('[data-say]');
-  if (s && !s.disabled) tts.say(s.dataset.say, {slow: 'slow' in s.dataset, alt: 'alt' in s.dataset});
+  if (s && !s.disabled) tts.say(s.dataset.say, {slow: 'slow' in s.dataset, alt: 'alt' in s.dataset, lang: s.dataset.lang});
   const a = e.target.closest('[data-act]');
   if (a && !a.disabled && ACT[a.dataset.act]) ACT[a.dataset.act](a, e);
 });

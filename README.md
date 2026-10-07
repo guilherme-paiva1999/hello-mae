@@ -61,7 +61,7 @@ Pronto: os comentários dela aparecem na planilha e em `#admin` (com a sua senha
 
 ## Áudio
 
-As frases são geradas com as vozes neurais da Microsoft (via [edge-tts](https://github.com/rany2/edge-tts)): **Ava** para a voz dela e do narrador, **Andrew** para oficiais e atendentes. O botão "Devagar" toca o mesmo arquivo a 70% da velocidade. Se faltar algum arquivo, o app usa a voz do aparelho.
+As frases são geradas com as vozes neurais da Microsoft (via [edge-tts](https://github.com/rany2/edge-tts)): **Ava** para a voz dela e do narrador, **Andrew** para oficiais e atendentes e **Francisca** (português do Brasil) para ler as opções de resposta em português. Ao tocar numa opção, o app lê o que está escrito, no idioma da opção. O botão "Devagar" toca o mesmo arquivo a 70% da velocidade. Se faltar algum arquivo, o app usa a voz do aparelho.
 
 ## Mudar o conteúdo
 

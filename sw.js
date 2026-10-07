@@ -9,7 +9,7 @@
 
 const VERSION = 'v4';
 const NETWORK_TIMEOUT = 3000;
-const AUDIO_VERSION = '7os5ic';
+const AUDIO_VERSION = '1a5dp0s';
 const CORE = `hello-mae-core-${VERSION}`;
 const MEDIA = 'hello-mae-media';
 

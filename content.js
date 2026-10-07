@@ -57,7 +57,7 @@ const STAGES = [
     {t:'phrase', en:"Tourism. I'm here on holiday.", pt:'Turismo. Estou aqui de férias.', note:'Nos Estados Unidos dizem <i>vacation</i>. Na Europa, <b>holiday</b>.'},
     {t:'phrase', en:'How long are you staying?', v:'m', pt:'Quanto tempo você vai ficar?'},
     {t:'phrase', en:"I'm staying for three weeks. I fly back on the 20th of May.", pt:'Vou ficar três semanas. Volto no dia 20 de maio.', note:'Diga sempre a data de volta. Isso mostra que você tem passagem e vai embora no prazo.'},
-    {t:'listen', en:'How long are you staying?', v:'m', q:'Ouça a pergunta e escolha a melhor resposta.', options:['For three weeks.','At a hotel in Amsterdam.','Tourism.'], why:'<b>How long</b> = quanto tempo.'},
+    {t:'listen', optLang:'en', en:'How long are you staying?', v:'m', q:'Ouça a pergunta e escolha a melhor resposta.', options:['For three weeks.','At a hotel in Amsterdam.','Tourism.'], why:'<b>How long</b> = quanto tempo.'},
     {t:'phrase', en:'Where are you staying?', v:'m', pt:'Onde você vai ficar hospedada?'},
     {t:'phrase', en:'At a hotel in Amsterdam. Here is my booking.', pt:'Num hotel em Amsterdam. Aqui está minha reserva.'},
     {t:'phrase', en:'Do you have a return ticket?', v:'m', pt:'Você tem passagem de volta?'},
@@ -65,7 +65,7 @@ const STAGES = [
     {t:'listen', en:'Please put your fingers on the scanner.', v:'m', q:'O que o oficial pediu?', options:['Colocar os dedos no leitor','Olhar para a câmera','Mostrar a passagem de volta']},
     {t:'listen', en:'Please look at the camera.', v:'m', q:'E agora, o que ele pediu?', options:['Olhar para a câmera','Tirar os óculos','Esperar na fila']},
     {t:'match', pairs:[['return ticket','passagem de volta'],['booking','reserva'],['travel insurance','seguro-viagem'],['queue','fila']]},
-    {t:'choice', q:'Qual destas respostas pode te trazer <b>problemas</b> na imigração?', options:['I might look for a job here.', "I'm visiting museums and canals.", "I'm going back to Brazil on the 20th of May."], why:'<b>Job</b> (trabalho) é a palavra que você nunca deve usar como turista. Nem de brincadeira.'},
+    {t:'choice', optLang:'en', q:'Qual destas respostas pode te trazer <b>problemas</b> na imigração?', options:['I might look for a job here.', "I'm visiting museums and canals.", "I'm going back to Brazil on the 20th of May."], why:'<b>Job</b> (trabalho) é a palavra que você nunca deve usar como turista. Nem de brincadeira.'},
     {t:'fill', text:'Could you speak more ___, please?', options:['slowly','slow','slowing'], en:'Could you speak more slowly, please?', pt:'Pode falar mais devagar, por favor?', why:'Para dizer <i>como</i> alguém fala, use a forma com <b>-ly</b>: slow → <b>slowly</b>.'},
     {t:'explain', kicker:'Pronta para treinar?', title:'Agora, o simulador', body:'<p>Na área de <b>Jogos</b>, o <b>Simulador de imigração</b> faz a entrevista completa com o oficial, em áudio, com perguntas diferentes a cada vez.</p><p>Faça pelo menos uma vez por semana até a viagem.</p>'}
   ]
@@ -131,7 +131,7 @@ const STAGES = [
         {en:'Platform 3 in ten minutes? Thank you!', pt:'Plataforma 3 em dez minutos? Obrigada!', q:'best', fb:'Ótima estratégia: repetir a informação confirma que você entendeu certo.'},
         {en:'Thanks.', pt:'Obrigada.', q:'ok', fb:'Tudo bem! Dica: repetir o número da plataforma ajuda a confirmar que você entendeu.'}]}
     ]},
-    {t:'listen', en:'The train to Amsterdam Centraal leaves from platform 3.', v:'m', q:'De qual plataforma sai o trem?', options:['3','13','30'], why:'<b>Three</b> = 3. Cuidado com <i>thirteen</i> (13) e <i>thirty</i> (30).'},
+    {t:'listen', optLang:'en', en:'The train to Amsterdam Centraal leaves from platform 3.', v:'m', q:'De qual plataforma sai o trem?', options:['3','13','30'], why:'<b>Three</b> = 3. Cuidado com <i>thirteen</i> (13) e <i>thirty</i> (30).'},
     {t:'choice', q:'Você encostou o cartão por aproximação para entrar na estação. O que fazer ao sair?', options:['Encostar o cartão de novo no leitor (check out)','Nada, já está pago','Comprar um bilhete na saída'], why:'Sem o <b>check out</b>, o sistema cobra uma tarifa alta, porque não sabe onde você desceu.'},
     {t:'build', pt:'Este lugar está livre?', answer:['Is','this','seat','free?'], extra:['chair','empty'], en:'Is this seat free?'}
   ]
@@ -524,5 +524,15 @@ function slug(text){
   return s;
 }
 
-window.HM = {STAGES, SOON, KEYWORDS, STORIES, STORIES_SOON, INTERVIEW, DICTATION, SPOT, EXTRA_PAIRS, CHECKLIST, strip, slug};
+// Idioma das opções de resposta de um exercício, para ler em voz alta quando ela toca.
+// Completar, montar frase e caça ao erro são sempre em inglês. Nas outras, as opções são
+// em inglês quando a resposta certa é a frase "en" do exercício, ou quando optLang:'en'.
+function optLang(st){
+  if (st.optLang) return st.optLang;
+  if (st.t === 'fill' || st.t === 'build' || st.t === 'spot') return 'en';
+  if (st.en && (st.options || []).some(o => strip(o) === strip(st.en))) return 'en';
+  return 'pt';
+}
+
+window.HM = {optLang, STAGES, SOON, KEYWORDS, STORIES, STORIES_SOON, INTERVIEW, DICTATION, SPOT, EXTRA_PAIRS, CHECKLIST, strip, slug};
 })();
