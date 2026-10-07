@@ -23,7 +23,10 @@ const RATE = '-10%';                   // um pouco mais devagar que o normal, pa
 
 const sandbox = {window: {}};
 vm.runInNewContext(fs.readFileSync(path.join(root, 'content.js'), 'utf8'), sandbox);
+const newsFile = path.join(root, 'news.js');
+if (fs.existsSync(newsFile)) vm.runInNewContext(fs.readFileSync(newsFile, 'utf8'), sandbox);
 const {slug, strip, ...content} = sandbox.window.HM;
+content.NEWS = sandbox.window.HM_NEWS || [];
 
 const jobs = new Map(); // nome do arquivo -> {text, voice}
 function add(text, male = false){

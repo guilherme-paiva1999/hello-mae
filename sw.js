@@ -7,14 +7,14 @@
    Mudou a lista de arquivos fixos abaixo? Aumente VERSION.
    AUDIO_VERSION é atualizado sozinho pelo tools/build-audio.mjs. */
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const NETWORK_TIMEOUT = 3000;
-const AUDIO_VERSION = 'tvb1fs';
+const AUDIO_VERSION = '1915z3l';
 const CORE = `hello-mae-core-${VERSION}`;
 const MEDIA = 'hello-mae-media';
 
 const SHELL = [
-  './', 'index.html', 'content.js', 'config.js', 'audio/index.js', 'manifest.webmanifest',
+  './', 'index.html', 'content.js', 'news.js', 'config.js', 'audio/index.js', 'manifest.webmanifest',
   'img/feliz.webp', 'img/triste.webp', 'img/pensativo.webp', 'img/telefone.webp',
   'img/feliz.png', 'img/triste.png', 'img/pensativo.png', 'img/telefone.png',
   'icons/icon-192.png', 'icons/apple-touch-icon.png'

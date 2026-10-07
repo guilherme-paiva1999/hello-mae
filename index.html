@@ -123,6 +123,12 @@ textarea{resize:vertical;min-height:96px}
 .card-row{display:flex;align-items:center;gap:14px}
 .card-row > div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .gui-card{border-color:var(--wa)}
+.news-card{border-color:var(--sun)}
+.new-badge{display:inline-block;background:var(--sun);color:var(--sun-ink);border-radius:99px;padding:2px 10px;font-size:.72rem;font-family:var(--f-body);font-weight:700;vertical-align:middle;margin-left:6px;letter-spacing:.02em}
+.news-card .n-title{color:var(--ink);font-weight:700}
+.news-card details summary{cursor:pointer;font-weight:700;color:var(--brand-deep);padding:6px 0;min-height:44px;display:flex;align-items:center}
+.news-card details ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.news-card details .pi{min-height:56px}
 .meter{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
 .meter span{display:block;height:100%;background:var(--good);border-radius:99px}
 .sec{display:flex;flex-direction:column;gap:12px}
@@ -335,6 +341,7 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 
 <script src="config.js"></script>
 <script src="content.js"></script>
+<script src="news.js"></script>
 <script src="audio/index.js"></script>
 <script>
 (function(){
@@ -342,6 +349,7 @@ document.documentElement.lang = 'pt-BR';
 const {STAGES, SOON, STORIES, STORIES_SOON, INTERVIEW, DICTATION, SPOT, EXTRA_PAIRS, CHECKLIST, strip, slug} = window.HM;
 const CFG = window.HM_CONFIG || {};
 const AUDIO = new Set(window.HM_AUDIO || []);
+const NEWS = window.HM_NEWS || [];
 const GUI = CFG.contactName || 'Gui';
 
 /* ---------- Estado ---------- */
@@ -358,7 +366,7 @@ const PHRASES = {};
 STAGES.forEach(s => s.steps.forEach(st => { if (st.t === 'phrase') PHRASES[st.en] = {en: st.en, pt: st.pt, v: st.v, stage: s.id}; }));
 
 function load(){
-  const def = {name:'', done:{}, deck:{}, streak:{n:0, last:null}, best:{}, check:{}, feedback:[], outbox:[]};
+  const def = {name:'', done:{}, deck:{}, streak:{n:0, last:null}, best:{}, check:{}, feedback:[], outbox:[], newsRead:{}};
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return Object.assign(def, JSON.parse(raw));
@@ -633,6 +641,8 @@ function home(){
 
     ${nextCard}
 
+    ${newsCard()}
+
     <section class="card gui-card">
       <div class="card-row">
         ${avatar('telefone','s')}
@@ -793,6 +803,7 @@ const STEP = {
     return {
       html:`<div class="kicker">${st.kind === 'news' ? `📰 Notícia${st.date ? ' · ' + st.date : ''}` : '📖 História'}</div>
         <h2 class="title" lang="en">${st.title}</h2>
+        ${st.source ? `<p class="hint">Fonte: ${esc(st.source)}. Texto adaptado para o nível B1.</p>` : ''}
         <p class="hint">Toque nas palavras em amarelo para ver a tradução.</p>
         <button class="btn secondary" data-act="playStory">▶ Ouvir o texto todo</button>
         <div class="story">${st.paras.map((p,k) => `
@@ -1018,6 +1029,13 @@ function finishRun(){
       facts:[[sc.best, 'ótimas'], [sc.ok, 'podem melhorar'], [sc.bad, 'arriscadas']],
       extra: report ? `<div class="report"><h2>Para melhorar</h2>${report}</div>` : ''});
   }
+  if (ctx.kind === 'news'){
+    const n = L.queue.filter(s => s.t === 'choice').length, right = L.right;
+    S.newsRead[ctx.id] = true;
+    L = null;
+    return finishScreen({mood: right >= n / 2 ? 'feliz' : 'triste', title: 'Notícia lida!', ctx,
+      msg: `Você acertou ${right} de ${n} ${n === 1 ? 'pergunta' : 'perguntas'}. Toda semana chega uma notícia nova.`});
+  }
   // Ditado e caça ao erro
   const n = L.queue.length, right = L.right;
   S.best[ctx.kind] = Math.max(S.best[ctx.kind] || 0, right);
@@ -1202,6 +1220,27 @@ function callGui(){
   setTimeout(() => { if (el.isConnected) location.href = url; }, 1800);
 }
 
+/* ---------- Notícia da semana ---------- */
+
+function newsCard(){
+  if (!NEWS.length) return '';
+  const [n, ...older] = NEWS;
+  const read = !!S.newsRead[n.id];
+  return `<section class="card news-card">
+    <div class="card-row">
+      <span class="nc-emoji" style="background:var(--sun-soft)" aria-hidden="true">📰</span>
+      <div><h2>Notícia da semana${read ? '' : '<span class="new-badge">Nova!</span>'}</h2>
+        <p class="n-title" lang="en">${esc(n.title)}</p><p>${esc(n.date)}</p></div>
+    </div>
+    <button class="btn ${read ? 'secondary' : 'primary'}" data-act="news" data-id="${n.id}">${read ? 'Ler de novo' : 'Ler agora'}</button>
+    ${older.length ? `<details>
+      <summary>Notícias anteriores (${older.length})</summary>
+      <ul>${older.map(o => `<li><button class="pi ${S.newsRead[o.id] ? 'done' : ''}" data-act="news" data-id="${o.id}">
+        <span class="pi-txt"><span class="pi-t" lang="en">${esc(o.title)}</span><span class="pi-s">${esc(o.date)}${S.newsRead[o.id] ? ' · lida' : ''}</span></span></button></li>`).join('')}</ul>
+    </details>` : ''}
+  </section>`;
+}
+
 /* ---------- Instalar como app ---------- */
 
 const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
@@ -1294,6 +1333,12 @@ const ACT = {
   dictation(){ startRun({kind:'dictation', id:'dictation', title:'Ditado', noRequeue:true}, shuffle(DICTATION).slice(0, 6).map(d => ({t:'dictation', ...d}))); },
   spot(){ startRun({kind:'spot', id:'spot', title:'Caça ao erro', noRequeue:true}, shuffle(SPOT).slice(0, 6).map(d => ({t:'spot', ...d}))); },
   timed: startTimed,
+  news(b){
+    const n = NEWS.find(x => x.id === b.dataset.id);
+    if (!n) return;
+    startRun({kind:'news', id:n.id, title:`Notícia da semana: ${n.title}`, noRequeue:true},
+      [{t:'read', kind:'news', title:n.title, date:n.date, source:n.source, paras:n.paras}, ...n.questions]);
+  },
   review: startReview,
   checklist,
   check(b){ S.check[b.dataset.id] = !S.check[b.dataset.id]; save(); checklist(); },
