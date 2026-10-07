@@ -11,6 +11,7 @@ const sandbox = {window: {}};
 const errors = [];
 
 try {
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'content.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(root, 'news.js'), 'utf8'), sandbox);
 } catch (e) {
   console.error('news.js não é JavaScript válido:', e.message);
@@ -18,6 +19,16 @@ try {
 }
 
 const news = sandbox.window.HM_NEWS;
+// Mesma regra do app para achar expressões do curso (KEYWORDS, no content.js) no texto
+const MIN_KEYWORDS = 3;
+const keywords = (sandbox.window.HM && sandbox.window.HM.KEYWORDS || []).map(k => {
+  const body = k.en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['’]").replace(/ /g, '[\\s-]+');
+  return {en: k.en, re: new RegExp(`\\b${body}${/\s/.test(k.en) ? '' : '(?:e?s)?'}\\b`, 'i')};
+});
+const keywordsIn = n => {
+  const text = (n.paras || []).map(p => (p.en || '').replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, '$1')).join(' ');
+  return keywords.filter(k => k.re.test(text)).map(k => k.en);
+};
 if (!Array.isArray(news) || !news.length) errors.push('window.HM_NEWS precisa ser uma lista com pelo menos uma notícia.');
 else {
   if (news.length > 12) errors.push(`Há ${news.length} notícias; mantenha no máximo 12 (apague as mais antigas, no fim da lista).`);
@@ -40,8 +51,12 @@ else {
       if (q.t !== 'choice' || !q.q || !Array.isArray(q.options) || q.options.length !== 3) errors.push(`${where}, pergunta ${j + 1}: use {t:'choice', q, options:[certa, errada, errada]}.`);
     });
   });
+  // Só a notícia mais nova precisa seguir a regra (as antigas podem ser de antes dela)
+  const found = keywordsIn(news[0]);
+  if (found.length < MIN_KEYWORDS) errors.push(`A notícia mais nova usa ${found.length} expressão(ões) do curso (${found.join(', ') || 'nenhuma'}); use pelo menos ${MIN_KEYWORDS} da lista KEYWORDS do content.js, escritas exatamente como lá.`);
   for (let i = 1; i < news.length; i++) if (news[i - 1].id < news[i].id) errors.push('As notícias devem estar da mais nova (topo) para a mais antiga.');
 }
 
 if (errors.length) { console.error('Problemas no news.js:\n- ' + errors.join('\n- ')); process.exit(1); }
 console.log(`news.js OK: ${news.length} notícia(s). Mais nova: ${news[0].id} "${news[0].title}".`);
+console.log(`Expressões do curso na notícia mais nova: ${keywordsIn(news[0]).join(', ')}.`);

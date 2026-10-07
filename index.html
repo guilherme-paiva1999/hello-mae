@@ -254,6 +254,9 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 .para{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .para.playing{outline:3px solid var(--sun);outline-offset:2px}
 .para .en{font-size:1.12rem;line-height:1.65}
+.kw{background:none;border:0;border-radius:0;padding:0 1px;font:inherit;font-weight:700;color:var(--good-ink);border-bottom:3px solid var(--good)}
+.learned-hint{background:var(--good-soft);color:var(--good-ink);border-radius:14px;padding:10px 14px;font-weight:700;font-size:.95rem}
+.kw-sample{border-bottom:3px solid var(--good)}
 .gl{background:var(--warn-soft);color:var(--warn-ink);box-shadow:inset 0 -2px 0 var(--warn);border:0;border-radius:6px;padding:0 4px;font:inherit;font-weight:700}
 
 /* Faixa de resposta */
@@ -350,6 +353,11 @@ const {STAGES, SOON, STORIES, STORIES_SOON, INTERVIEW, DICTATION, SPOT, EXTRA_PA
 const CFG = window.HM_CONFIG || {};
 const AUDIO = new Set(window.HM_AUDIO || []);
 const NEWS = window.HM_NEWS || [];
+// Expressões ensinadas nas etapas, para destacar nos textos (as mais longas primeiro)
+const KW = (window.HM.KEYWORDS || []).slice().sort((a, b) => b.en.length - a.en.length).map(k => {
+  const body = k.en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['’]").replace(/ /g, '[\\s-]+');
+  return {...k, re: new RegExp(`\\b${body}${/\s/.test(k.en) ? '' : '(?:e?s)?'}\\b`, 'gi')};
+});
 const GUI = CFG.contactName || 'Gui';
 
 /* ---------- Estado ---------- */
@@ -393,6 +401,32 @@ function nm(){ return (S.name||'').trim().split(/\s+/)[0] || 'Você'; }
 // Palavras marcadas com [[palavra|tradução]] viram botões com tradução
 const md = s => String(s).replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, (m,a,b) => `<button class="gl" data-act="gloss" data-g="${esc(b)}" data-say="${esc(a)}">${a}</button>`);
 const alt = v => v === 'm' ? ' data-alt' : '';
+
+// Expressões que ela já aprendeu: as das etapas concluídas e as da etapa atual
+const learnedKW = stageId => KW.filter(k => S.done[k.stage] || k.stage === stageId);
+// Como md(), mas sublinha em verde as expressões aprendidas (só a primeira vez de cada uma
+// no texto, para não poluir). "found" acumula as já destacadas.
+const kwButton = (k, shown) => `<button class="kw" data-act="kw" data-en="${esc(k.en)}" data-pt="${esc(k.pt)}" data-say="${esc(k.en)}">${shown}</button>`;
+function mdLearned(text, kws, found){
+  if (!kws.length) return md(text);
+  return String(text).split(/(\[\[[^\]]+\]\])/).map(seg => {
+    if (seg.startsWith('[[')){
+      // Palavra marcada com tradução que ela já aprendeu: aparece em verde, não em amarelo
+      const word = seg.slice(2).split('|')[0];
+      const k = kws.find(k => !found.has(k.en) && new RegExp(`^(?:${k.re.source})$`, 'i').test(word));
+      if (!k) return md(seg);
+      found.add(k.en);
+      return kwButton(k, word);
+    }
+    const hits = [];
+    for (const k of kws) seg = seg.replace(k.re, m => {
+      if (found.has(k.en)) return m;
+      found.add(k.en); hits.push({m, k});
+      return `\u0000${hits.length - 1}\u0001`;
+    });
+    return seg.replace(/\u0000(\d+)\u0001/g, (_, i) => kwButton(hits[i].k, hits[i].m));
+  }).join('');
+}
 
 function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function today(){ return fmt(new Date()); }
@@ -800,15 +834,19 @@ const STEP = {
     };
   },
   read(st){
+    const kws = learnedKW(L && L.ctx.kind === 'stage' ? L.ctx.id : null), found = new Set();
+    const paras = st.paras.map(p => mdLearned(p.en, kws, found));
+    const nf = found.size;
     return {
       html:`<div class="kicker">${st.kind === 'news' ? `📰 Notícia${st.date ? ' · ' + st.date : ''}` : '📖 História'}</div>
         <h2 class="title" lang="en">${st.title}</h2>
         ${st.source ? `<p class="hint">Fonte: ${esc(st.source)}. Texto adaptado para o nível B1.</p>` : ''}
+        ${nf ? `<p class="learned-hint">✓ ${nf === 1 ? 'Uma expressão que você aprendeu aparece' : `${nf} expressões que você aprendeu aparecem`} <span class="kw-sample">sublinhada${nf === 1 ? '' : 's'} em verde</span>. Toque para relembrar.</p>` : ''}
         <p class="hint">Toque nas palavras em amarelo para ver a tradução.</p>
         <button class="btn secondary" data-act="playStory">▶ Ouvir o texto todo</button>
         <div class="story">${st.paras.map((p,k) => `
           <div class="para" id="p${k}">
-            <p class="en" lang="en">${md(p.en)}</p>
+            <p class="en" lang="en">${paras[k]}</p>
             <div class="line-tools">
               <button class="chip" data-say="${esc(strip(p.en))}">${ICON} Ouvir</button>
               <button class="chip" data-act="tr">Tradução</button>
@@ -1456,6 +1494,7 @@ const ACT = {
     const st = cur();
     tts.play(st.paras.map((p,k) => ({text: p.en, el: $('#p'+k)})));
   },
+  kw(b){ toast(`✓ Você aprendeu isso! <b lang="en">${esc(b.dataset.en)}</b> = ${esc(b.dataset.pt)}`); },
   gloss(b){ toast(`<b lang="en">${esc(b.textContent)}</b> = ${esc(b.dataset.g)}`); },
   tpick(b){
     if (!G || G.busy) return;
