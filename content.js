@@ -47,8 +47,8 @@ const STAGES = [
 {
   id:'s2', emoji:'🛂', title:'Imigração em Schiphol', sub:'Perguntas reais e como responder',
   steps:[
-    {t:'explain', kicker:'Etapa 2 · A parte mais importante', title:'Como funciona a imigração na Holanda', body:'<p>Brasileiros podem ficar até <b>90 dias</b> como turistas na Holanda e no resto do espaço Schengen, sem visto.</p><p>Ao descer do avião, siga as placas <b>All passports</b>. A fila <b>EU / EEA / CH</b> é só para europeus.</p><p>Quem atende é a <b>Koninklijke Marechaussee</b>, a polícia de fronteira holandesa. Eles falam inglês muito bem e são diretos: fazem poucas perguntas, e rápido.</p><p>O oficial pode pedir suas digitais e uma foto. É o novo sistema europeu de registro de entrada (EES) e é normal.</p><div class="alert"><b>Voo com conexão?</b> Se você trocar de avião em outro país europeu, como Portugal ou França, a imigração acontece <b>lá</b>, e não na Holanda.</div>'},
-    {t:'explain', kicker:'Documentos', title:'O que levar na mão, impresso', body:'<p>Guarde tudo numa pasta, na bolsa de mão. Nunca na mala despachada.</p><ul class="checks"><li><b>Passaporte</b> válido por pelo menos 3 meses depois da data de volta</li><li><b>Passagem de volta</b></li><li><b>Reserva do hotel</b> com o endereço</li><li><b>Seguro-viagem</b> com cobertura mínima de €30.000</li><li><b>Cartão de crédito</b> ou extrato, para mostrar que tem dinheiro para a viagem</li></ul><div class="alert"><b>ETIAS:</b> a Europa deve começar a exigir uma autorização online chamada ETIAS. Uns 3 meses antes da viagem, confira no site oficial da União Europeia se ela já é obrigatória.</div><p>Na tela inicial, a <b>Lista da viagem</b> ajuda você a conferir tudo.</p>'},
+    {t:'explain', kicker:'Etapa 2 · A parte mais importante', title:'Como funciona a imigração na Holanda', body:'<p>Brasileiros podem ficar até <b>90 dias</b> como turistas na Holanda e no resto do espaço Schengen, sem visto.</p><p>Ao descer do avião, siga as placas <b>All passports</b>. A fila <b>EU / EEA / CH</b> é só para europeus.</p><p>Quem atende é a <b>Koninklijke Marechaussee</b>, a polícia de fronteira holandesa. Eles falam inglês muito bem e são diretos: fazem poucas perguntas, e rápido.</p><p>Desde abril de 2026, o passaporte <b>não é mais carimbado</b>. Na primeira entrada, o oficial tira uma foto do seu rosto e registra quatro digitais no sistema europeu de entrada e saída (EES). É normal e rápido.</p><div class="alert"><b>Voo com conexão?</b> Se você trocar de avião em outro país europeu, como Portugal ou França, a imigração acontece <b>lá</b>, e não na Holanda.</div>'},
+    {t:'explain', kicker:'Documentos', title:'O que levar na mão, impresso', body:'<p>Guarde tudo numa pasta, na bolsa de mão. Nunca na mala despachada.</p><ul class="checks"><li><b>Passaporte</b> válido por pelo menos 3 meses depois da data de volta</li><li><b>Passagem de volta</b></li><li><b>Reserva do hotel</b> com o endereço</li><li><b>Seguro-viagem</b> com cobertura mínima de €30.000</li><li><b>Cartão de crédito</b> ou extrato, para mostrar que tem dinheiro para a viagem</li></ul><div class="alert"><b>ETIAS:</b> a Europa vai exigir uma autorização online chamada ETIAS, mas ainda não há data confirmada. Uns 3 meses antes da viagem, confira no site oficial da União Europeia se ela já é obrigatória.</div><p>Na tela inicial, a <b>Lista da viagem</b> ajuda você a conferir tudo.</p>'},
     {t:'explain', kicker:'Regras de ouro', title:'Como se comportar no guichê', body:'<p><b>1. Responda só o que foi perguntado.</b> Frases curtas e verdadeiras.</p><p><b>2. Nunca fale em trabalhar.</b> Palavras como <i>work</i> e <i>job</i> fazem o oficial achar que você quer trabalhar sem visto.</p><p><b>3. Não entendeu? Peça para repetir.</b> É normal, e muito melhor do que responder qualquer coisa.</p>', examples:[
       {en:'Sorry, could you repeat that, please?', pt:'Desculpe, pode repetir, por favor?'},
       {en:'Could you speak more slowly, please?', pt:'Pode falar mais devagar, por favor?'}
@@ -193,6 +193,94 @@ const STAGES = [
   ]
 }
 ];
+
+/* ---------- Leituras dentro das etapas ----------
+   Cada etapa ganha um texto (notícia ou história) com perguntas, inserido antes do
+   último exercício. Para trocar ou adicionar textos, mexa só aqui.
+   Fatos das notícias conferidos em outubro de 2026. */
+
+const READINGS = {
+  s1: {
+    read:{kind:'news', title:'KLM: 100 years in the sky', date:'outubro de 2026', paras:[
+      {en:"KLM Royal Dutch Airlines was founded in 1919, and it is the oldest airline in the world that still flies under its original name. Its planes are easy to [[recognise|reconhecer]]: they are light blue, like the Dutch sky on a sunny day.", pt:'A KLM foi fundada em 1919 e é a companhia aérea mais antiga do mundo que ainda voa com o nome original. Os aviões dela são fáceis de reconhecer: são azul-claros, como o céu holandês num dia de sol.'},
+      {en:"For many years, KLM has given its business class passengers a small gift: a [[tiny|minúsculo]] blue and white house made of [[porcelain|porcelana]], filled with a Dutch drink called jenever. Each house is a copy of a real building in the Netherlands, and many people [[collect|colecionam]] them.", pt:'Há muitos anos, a KLM dá um presentinho aos passageiros da classe executiva: uma casinha minúscula de porcelana azul e branca, cheia de uma bebida holandesa chamada jenever. Cada casinha é a cópia de um prédio de verdade da Holanda, e muita gente coleciona.'},
+      {en:"On long flights from Brazil, the crew usually speaks Dutch and English. Some flight attendants also speak Portuguese, but you can't be sure. So it's a good idea to [[practise|praticar]] a few phrases before your trip!", pt:'Nos voos longos saindo do Brasil, a tripulação costuma falar holandês e inglês. Alguns comissários também falam português, mas não dá para ter certeza. Então é uma boa ideia praticar algumas frases antes da viagem!'}
+    ]},
+    questions:[
+      {t:'choice', q:'Qual é a cor dos aviões da KLM?', options:['Azul-claro','Vermelho','Verde']},
+      {t:'choice', q:'O que a KLM dá de presente na classe executiva?', options:['Uma casinha de porcelana azul e branca','Um guarda-chuva holandês','Uma bicicleta em miniatura'], why:'<span class="eng">A tiny blue and white house made of porcelain</span> = uma casinha minúscula de porcelana azul e branca.'}
+    ]
+  },
+  s2: {
+    read:{kind:'news', title:'Goodbye, passport stamps', date:'outubro de 2026', paras:[
+      {en:"Since April 2026, travellers from outside the European Union no longer get a [[stamp|carimbo]] in their passport when they enter the Schengen Area. Instead, a new digital system called EES [[records|registra]] who enters and leaves, and when.", pt:'Desde abril de 2026, viajantes de fora da União Europeia não recebem mais um carimbo no passaporte quando entram no espaço Schengen. Em vez disso, um novo sistema digital chamado EES registra quem entra e sai, e quando.'},
+      {en:"The first time you arrive, the officer takes a photo of your face and scans four of your fingers. It only takes a few minutes. Children under twelve don't need to give their [[fingerprints|digitais]].", pt:'Na primeira vez que você chega, o oficial tira uma foto do seu rosto e escaneia quatro dedos. Leva só alguns minutos. Crianças com menos de doze anos não precisam dar as digitais.'},
+      {en:"The system also counts your days [[automatically|automaticamente]]. Tourists from Brazil can stay up to 90 days in any 180-day period, and the computer knows exactly when you arrived. In the first weeks, some airports had long queues, so experts say it's best to arrive with time and patience.", pt:'O sistema também conta seus dias automaticamente. Turistas do Brasil podem ficar até 90 dias em qualquer período de 180 dias, e o computador sabe exatamente quando você chegou. Nas primeiras semanas, alguns aeroportos tiveram filas longas, então os especialistas dizem que é melhor chegar com tempo e paciência.'},
+      {en:"Another system, called ETIAS, will ask visitors to fill in a form online before they travel. At the moment, the EU has not announced a date for it, so check the official website a few months before your trip.", pt:'Outro sistema, chamado ETIAS, vai pedir que os visitantes preencham um formulário online antes de viajar. Por enquanto, a UE não anunciou uma data, então confira o site oficial alguns meses antes da viagem.'}
+    ]},
+    questions:[
+      {t:'choice', q:'O que mudou na imigração desde abril de 2026?', options:['O passaporte não é mais carimbado: tudo fica registrado no computador','Brasileiros agora precisam de visto','Não é mais preciso mostrar o passaporte']},
+      {t:'choice', q:'Quanto tempo um turista brasileiro pode ficar?', options:['Até 90 dias a cada 180 dias','Até 30 dias','Até 1 ano'], why:'<span class="eng">Up to 90 days in any 180-day period</span> = até 90 dias em qualquer período de 180 dias.'},
+      {t:'choice', q:'O que é o ETIAS?', options:['Um formulário online que ainda não tem data para começar','O novo carimbo do passaporte','Um tipo de seguro-viagem']}
+    ]
+  },
+  s3: {
+    read:{kind:'story', title:'The orange suitcase', paras:[
+      {en:"Marta, a teacher from Recife, was waiting at the [[baggage reclaim|retirada de bagagem]] in Amsterdam. She was calm, because her suitcase was easy to find: it was bright orange, with a sticker of a toucan on it.", pt:'Marta, uma professora de Recife, esperava na retirada de bagagem em Amsterdam. Ela estava tranquila, porque a mala dela era fácil de achar: era laranja-viva, com um adesivo de tucano.'},
+      {en:"Then she saw it. An old man was walking away with her orange suitcase! \"Excuse me, sir!\" she called. \"I think that's my suitcase.\" The man stopped, looked at the bag and [[frowned|franziu a testa]]. \"No, this is mine,\" he said.", pt:'Então ela viu. Um senhor estava indo embora com a mala laranja dela! "Com licença, senhor!", ela chamou. "Acho que essa é a minha mala." O homem parou, olhou para a mala e franziu a testa. "Não, essa é minha", ele disse.'},
+      {en:"Marta smiled and pointed at the toucan. \"Does yours have a toucan?\" The man looked again, and his face turned red. \"Oh dear, I'm so sorry! Mine is orange too, but it has a [[tulip|tulipa]].\"", pt:'Marta sorriu e apontou para o tucano. "A sua tem um tucano?" O homem olhou de novo, e o rosto dele ficou vermelho. "Ai, meu Deus, me desculpe! A minha também é laranja, mas tem uma tulipa."'},
+      {en:"They both laughed. A minute later, the man's suitcase came round on the [[belt|esteira]], with a big yellow tulip. \"Orange is the Dutch national colour,\" he explained. \"Half the suitcases here are orange!\"", pt:'Os dois riram. Um minuto depois, a mala do homem apareceu na esteira, com uma grande tulipa amarela. "Laranja é a cor nacional da Holanda", ele explicou. "Metade das malas aqui é laranja!"'}
+    ]},
+    questions:[
+      {t:'choice', q:'Por que a Marta achou fácil encontrar a mala dela?', options:['Era laranja, com um adesivo de tucano','Era muito pequena','Tinha o nome dela em letras grandes']},
+      {t:'choice', q:'O que a Marta disse para o senhor?', options:["Excuse me, sir! I think that's my suitcase.", 'Hey! Give me my bag!', 'Sorry, is this your toucan?'], en:"Excuse me, sir! I think that's my suitcase.", why:'Educada e firme: <b>Excuse me</b> para chamar a atenção e <b>I think</b> para não acusar ninguém.'},
+      {t:'choice', q:'Qual é a cor nacional da Holanda?', options:['Laranja','Azul','Vermelho']}
+    ]
+  },
+  s4: {
+    read:{kind:'news', title:'Pay for the train with your bank card', date:'outubro de 2026', paras:[
+      {en:"In the Netherlands, you don't need to buy a paper ticket to take the train. You can simply hold your [[contactless|por aproximação]] bank card or your phone against the card reader at the [[gate|catraca]]. This is called checking in.", pt:'Na Holanda, você não precisa comprar um bilhete de papel para pegar o trem. Basta encostar seu cartão do banco por aproximação ou o celular no leitor da catraca. Isso se chama fazer o check-in.'},
+      {en:"When you arrive at your station, you must hold the same card against the reader again to check out. If you forget, the system doesn't know where you got off, and you pay a much higher [[fare|tarifa]].", pt:'Quando chega à sua estação, você precisa encostar o mesmo cartão no leitor de novo para fazer o check-out. Se esquecer, o sistema não sabe onde você desceu, e você paga uma tarifa bem mais cara.'},
+      {en:"Use the same card for the whole trip. If you check in with your phone and check out with your plastic card, the system thinks they belong to two different people.", pt:'Use o mesmo cartão a viagem inteira. Se você fizer o check-in com o celular e o check-out com o cartão de plástico, o sistema acha que são duas pessoas diferentes.'},
+      {en:"One more tip: Dutch trains are usually [[on time|pontuais]], but there is often work on the tracks at weekends. Check the NS app before you travel.", pt:'Mais uma dica: os trens holandeses costumam ser pontuais, mas muitas vezes há obras nos trilhos nos fins de semana. Confira o aplicativo da NS antes de viajar.'}
+    ]},
+    questions:[
+      {t:'choice', q:'O que acontece se você esquecer o check-out?', options:['Você paga uma tarifa bem mais cara','Nada, a viagem já está paga','O trem não sai da estação']},
+      {t:'choice', q:'Por que usar o mesmo cartão na entrada e na saída?', options:['Celular e cartão de plástico contam como pessoas diferentes','O cartão de plástico é mais barato','O celular não funciona nos trens']}
+    ]
+  },
+  s5: {
+    read:{kind:'news', title:"Amsterdam's tourist tax", date:'outubro de 2026', paras:[
+      {en:"If you stay in a hotel in Amsterdam, you pay a tourist tax on top of the room price. In 2026, it is 12.5% of the price of your room, one of the highest in Europe.", pt:'Quem se hospeda num hotel em Amsterdam paga uma taxa turística além do preço do quarto. Em 2026, ela é de 12,5% do preço do quarto, uma das mais altas da Europa.'},
+      {en:"The city says it needs the money because there are too many tourists in the [[city centre|centro da cidade]]. On busy days, the narrow streets near the canals are full of people, and many [[residents|moradores]] complain about the noise.", pt:'A cidade diz que precisa do dinheiro porque há turistas demais no centro. Nos dias mais cheios, as ruas estreitas perto dos canais ficam lotadas, e muitos moradores reclamam do barulho.'},
+      {en:"The tax may go up again, because the city has [[plans|planos]] to raise it a little every year. Some hotels add it to your bill at the end of your stay, so don't be surprised if the total is higher than the price on the website.", pt:'A taxa pode subir de novo, porque a cidade tem planos de aumentá-la um pouco a cada ano. Alguns hotéis cobram a taxa no fim da estadia, então não se assuste se o total for maior que o preço do site.'},
+      {en:"A tip to save money: some travellers stay in smaller cities like Haarlem or Utrecht, which are only a short train ride from Amsterdam.", pt:'Uma dica para economizar: alguns viajantes ficam em cidades menores, como Haarlem ou Utrecht, que ficam a uma curta viagem de trem de Amsterdam.'}
+    ]},
+    questions:[
+      {t:'choice', q:'Quanto é a taxa turística de Amsterdam em 2026?', options:['12,5% do preço do quarto','1 euro por noite','Não existe taxa']},
+      {t:'choice', q:'Por que o total do hotel pode ser maior que o preço do site?', options:['Alguns hotéis cobram a taxa no fim da estadia','O café da manhã é obrigatório','O euro fica mais caro à noite']}
+    ]
+  },
+  s6: {
+    read:{kind:'story', title:'A phone on the tram', paras:[
+      {en:"Lúcia was on a tram in Amsterdam when she [[realised|percebeu]] that her phone was not in her bag. Her heart [[sank|gelou]]. All her photos, her maps and her hotel address were on that phone.", pt:'Lúcia estava num bonde em Amsterdam quando percebeu que o celular não estava na bolsa. Ela gelou. Todas as fotos, os mapas e o endereço do hotel estavam naquele celular.'},
+      {en:"She took a deep breath and asked the woman next to her: \"Excuse me, could you help me? I think I've lost my phone.\" The woman smiled. \"Don't worry. Let's call it.\"", pt:'Ela respirou fundo e perguntou à mulher ao lado: "Com licença, você pode me ajudar? Acho que perdi meu celular." A mulher sorriu. "Não se preocupe. Vamos ligar para ele."'},
+      {en:"The woman called Lúcia's number, and they heard a phone ringing at the back of the tram. A young man was holding it. \"I found it on the seat,\" he said. \"I was going to give it to the [[driver|motorista]].\"", pt:'A mulher ligou para o número da Lúcia, e elas ouviram um celular tocando no fundo do bonde. Um rapaz estava com ele. "Achei no banco", ele disse. "Eu ia entregar para o motorista."'},
+      {en:"Lúcia thanked them both many times. That evening, she wrote her hotel address on a piece of paper and put it in her [[wallet|carteira]]. \"Never again,\" she promised herself.", pt:'Lúcia agradeceu aos dois muitas vezes. Naquela noite, ela anotou o endereço do hotel num papel e guardou na carteira. "Nunca mais", ela prometeu a si mesma.'}
+    ]},
+    questions:[
+      {t:'choice', q:'O que a Lúcia perdeu?', options:['O celular','A carteira','O passaporte']},
+      {t:'choice', q:'Como ela pediu ajuda?', options:["Excuse me, could you help me? I think I've lost my phone.", 'Give me your phone!', 'Where is the driver?'], en:"Excuse me, could you help me? I think I've lost my phone."},
+      {t:'choice', q:'O que ela fez naquela noite?', options:['Anotou o endereço do hotel num papel e guardou na carteira','Comprou um celular novo','Voltou para o Brasil']}
+    ]
+  }
+};
+
+// Insere cada leitura (texto + perguntas) antes do último exercício da etapa
+STAGES.forEach(s => {
+  const r = READINGS[s.id];
+  if (r) s.steps.splice(s.steps.length - 1, 0, {t:'read', ...r.read}, ...r.questions);
+});
 
 const SOON = [
   {emoji:'☕', title:'Pela cidade', sub:'Cafés, museus e bicicletas'},

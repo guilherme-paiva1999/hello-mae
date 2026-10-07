@@ -65,7 +65,7 @@ As frases são geradas com as vozes neurais da Microsoft (via [edge-tts](https:/
 
 ## Mudar o conteúdo
 
-1. Edite o `content.js`
+1. Edite o `content.js` (as leituras de cada etapa ficam no bloco `READINGS`)
 2. Gere os áudios:
    ```bash
    pip install edge-tts

@@ -248,7 +248,7 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 .para{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .para.playing{outline:3px solid var(--sun);outline-offset:2px}
 .para .en{font-size:1.12rem;line-height:1.65}
-.gl{background:var(--sun-soft);color:var(--sun-ink);border:0;border-radius:6px;padding:0 4px;font:inherit;font-weight:700}
+.gl{background:var(--warn-soft);color:var(--warn-ink);box-shadow:inset 0 -2px 0 var(--warn);border:0;border-radius:6px;padding:0 4px;font:inherit;font-weight:700}
 
 /* Faixa de resposta */
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--good-soft);border-top:3px solid var(--good);padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:up .25s ease-out}
@@ -791,10 +791,10 @@ const STEP = {
   },
   read(st){
     return {
-      html:`<div class="kicker">História</div>
-        <h2 class="title">${st.title}</h2>
+      html:`<div class="kicker">${st.kind === 'news' ? `📰 Notícia${st.date ? ' · ' + st.date : ''}` : '📖 História'}</div>
+        <h2 class="title" lang="en">${st.title}</h2>
         <p class="hint">Toque nas palavras em amarelo para ver a tradução.</p>
-        <button class="btn secondary" data-act="playStory">▶ Ouvir a história toda</button>
+        <button class="btn secondary" data-act="playStory">▶ Ouvir o texto todo</button>
         <div class="story">${st.paras.map((p,k) => `
           <div class="para" id="p${k}">
             <p class="en" lang="en">${md(p.en)}</p>
