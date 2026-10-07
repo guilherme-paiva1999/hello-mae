@@ -572,7 +572,7 @@ function home(){
   const checked = CHECKLIST.filter(c => S.check[c.id]).length;
   const starHtml = n => `<span class="stars" aria-label="${n} de 3 estrelas">${[1,2,3].map(i => `<span class="${i<=n?'':'off'}">★</span>`).join('')}</span>`;
 
-  const rs = S.resume, rItem = rs && (rs.kind === 'stage' ? STAGES : STORIES).find(x => x.id === rs.id);
+  const rs = S.resume, rItem = rs && rs.i > 0 && (rs.kind === 'stage' ? STAGES : STORIES).find(x => x.id === rs.id);
   const resumeCard = rItem ? `
     <section class="next-card">
       <div class="eyebrow">Continuar de onde parou</div>
@@ -581,8 +581,8 @@ function home(){
         <div><h2>${rItem.title}</h2><p>Exercício ${rs.i + 1} de ${rs.total}</p></div>
       </div>
       <div class="meter" style="background:rgba(255,255,255,.25)" aria-hidden="true"><span style="width:${Math.round(rs.i / rs.total * 100)}%;background:var(--sun)"></span></div>
-      ${primary('Continuar', rs.kind, `data-id="${rItem.id}"`)}
-      <button class="linkbtn" style="color:inherit" data-act="resetResume">Começar do zero</button>
+      ${primary('▶ Continuar de onde parou', rs.kind, `data-id="${rItem.id}" data-mode="resume"`)}
+      <button class="btn secondary" data-act="${rs.kind}" data-id="${rItem.id}" data-mode="restart">↺ Começar do início</button>
     </section>` : '';
 
   const nextCard = resumeCard || (next ? `
@@ -859,14 +859,40 @@ const RESUMABLE = ['stage', 'story'];
 function clean(st){ const c = {}; for (const k in st) if (k[0] !== '_' || k === '_tries') c[k] = st[k]; return c; }
 
 // ctx: {kind, id, title}. Tipos: stage, story, interview, dictation, spot
-function startRun(ctx, steps){
+// Progresso salvo desta etapa/história, se ainda for válido
+function savedFor(kind, id, steps){
   const r = S.resume;
-  const canResume = r && RESUMABLE.includes(ctx.kind) && r.kind === ctx.kind && r.id === ctx.id
-    && r.base === steps.length && Array.isArray(r.queue) && r.i < r.queue.length;
-  L = canResume
+  return r && RESUMABLE.includes(kind) && r.kind === kind && r.id === id
+    && r.base === steps.length && Array.isArray(r.queue) && r.i < r.queue.length ? r : null;
+}
+
+// mode: 'resume' continua de onde parou, 'restart' começa do início
+function startRun(ctx, steps, mode = 'resume'){
+  const r = mode === 'restart' ? null : savedFor(ctx.kind, ctx.id, steps);
+  L = r
     ? {ctx, base: steps.length, queue: r.queue.map(s => ({...s})), i: r.i, mistakes: r.mistakes || 0, right: r.right || 0}
     : {ctx, base: steps.length, queue: steps.map(s => ({...s})), i: 0, mistakes: 0, right: 0};
   renderStep();
+}
+
+// Abre etapa/história. Se ela já tinha começado e não escolheu ainda, pergunta:
+// continuar de onde parou ou começar do início.
+function openRun(b, ctx, steps, emoji){
+  $$('.modal').forEach(e => e.remove());
+  const mode = b.dataset.mode;
+  const r = savedFor(ctx.kind, ctx.id, steps);
+  if (mode || !r || r.i === 0) return startRun(ctx, steps, mode || 'resume');
+  const m = document.createElement('div');
+  m.className = 'modal';
+  m.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mr">
+    <div class="card-row"><span class="nc-emoji" style="background:var(--brand-soft)" aria-hidden="true">${emoji}</span>
+      <div><h2 id="mr">${esc(ctx.title)}</h2><p>Você parou no exercício ${r.i + 1} de ${r.total}.</p></div></div>
+    ${primary('▶ Continuar de onde parou', ctx.kind, `data-id="${ctx.id}" data-mode="resume"`)}
+    <button class="btn secondary" data-act="${ctx.kind}" data-id="${ctx.id}" data-mode="restart">↺ Começar do início</button>
+    <button class="btn ghost" data-act="closeModal">Cancelar</button>
+  </div>`;
+  document.body.appendChild(m);
+  m.querySelector('.btn.primary').focus();
 }
 
 function saveResume(){
@@ -1262,8 +1288,8 @@ async function loadAdmin(key){
 const ACT = {
   home(){ $$('.modal').forEach(e => e.remove()); home(); },
   rename: welcome,
-  stage(b){ const s = STAGES.find(x => x.id === b.dataset.id); startRun({kind:'stage', id:s.id, title:s.title}, s.steps); },
-  story(b){ const s = STORIES.find(x => x.id === b.dataset.id); startRun({kind:'story', id:s.id, title:s.title}, [{t:'read', title:s.en_title, paras:s.paras}, ...s.questions]); },
+  stage(b){ const s = STAGES.find(x => x.id === b.dataset.id); openRun(b, {kind:'stage', id:s.id, title:s.title}, s.steps, s.emoji); },
+  story(b){ const s = STORIES.find(x => x.id === b.dataset.id); openRun(b, {kind:'story', id:s.id, title:s.title}, [{t:'read', title:s.en_title, paras:s.paras}, ...s.questions], s.emoji); },
   interview: startInterview,
   dictation(){ startRun({kind:'dictation', id:'dictation', title:'Ditado', noRequeue:true}, shuffle(DICTATION).slice(0, 6).map(d => ({t:'dictation', ...d}))); },
   spot(){ startRun({kind:'spot', id:'spot', title:'Caça ao erro', noRequeue:true}, shuffle(SPOT).slice(0, 6).map(d => ({t:'spot', ...d}))); },
@@ -1283,7 +1309,6 @@ const ACT = {
     L.queue[L.i] = clean(L.queue[L.i]);   // o exercício volta "novo", para responder de novo
     renderStep();
   },
-  resetResume(){ S.resume = null; save(); home(); },
   quit(){
     const m = document.createElement('div');
     m.className = 'modal';
@@ -1291,7 +1316,7 @@ const ACT = {
       <h2 id="mt">Quer mesmo sair?</h2>
       <p>${RESUMABLE.includes(L.ctx.kind) ? 'Pode sair tranquila: na tela inicial, toque em <b>Continuar</b> para voltar exatamente daqui.' : 'Se sair agora, este jogo começa do zero na próxima vez.'}</p>
       ${primary('Continuar', 'closeModal')}
-      <button class="btn ghost" data-act="home">Sair</button>
+      <button class="btn ghost" data-act="home">🏠 Ir para a tela inicial</button>
     </div>`;
     document.body.appendChild(m);
     m.querySelector('[data-act=closeModal]').focus();
