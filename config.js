@@ -7,5 +7,9 @@ window.HM_CONFIG = {
   // Ele é salvo só no celular dela, pela área de admin: abra o app com #admin no fim do endereço.
 
   // Endereço do Apps Script da planilha de comentários (veja o README). Termina em /exec
-  feedbackUrl: ''
+  feedbackUrl: '',
+
+  // App ID do OneSignal, para o Gui mandar notificações quando quiser (veja o README).
+  // Pode ficar público. A "REST API Key" do OneSignal é secreta e NUNCA deve vir para cá.
+  onesignalAppId: ''
 };

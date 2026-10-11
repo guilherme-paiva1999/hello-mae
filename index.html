@@ -345,6 +345,23 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 <div id="app"></div>
 
 <script src="config.js"></script>
+<script>
+// Mensagens do Gui pelo OneSignal: só carrega quando o App ID estiver no config.js
+if (window.HM_CONFIG && HM_CONFIG.onesignalAppId){
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  const s = document.createElement('script');
+  s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+  s.defer = true;
+  document.head.appendChild(s);
+  OneSignalDeferred.push(OneSignal => OneSignal.init({
+    appId: HM_CONFIG.onesignalAppId,
+    serviceWorkerPath: 'sw.js',
+    serviceWorkerParam: {scope: location.pathname.replace(/[^/]*$/, '')},
+    notifyButton: {enable: false},
+    promptOptions: {slidedown: {prompts: []}}
+  }));
+}
+</script>
 <script src="content.js"></script>
 <script src="news.js"></script>
 <script src="audio/index.js"></script>
@@ -1289,7 +1306,20 @@ async function registerReminder(){
   catch(e){ return false; }
 }
 // Já ativado antes: renova o registro a cada abertura
-if (canNotify && S.reminder === 'on' && Notification.permission === 'granted') registerReminder();
+if (canNotify && S.reminder === 'on' && Notification.permission === 'granted'){ registerReminder(); pushOptIn(); }
+
+// Inscreve o celular para receber as mensagens do Gui (OneSignal), se estiver configurado
+function pushOptIn(){
+  if (!window.OneSignalDeferred) return;
+  OneSignalDeferred.push(async OneSignal => { try { await OneSignal.User.PushSubscription.optIn(); } catch(e){} });
+}
+function pushStatus(){
+  if (!window.OneSignalDeferred) return Promise.resolve('ainda não configurado');
+  return new Promise(resolve => {
+    setTimeout(() => resolve('carregando... (confira a internet)'), 5000);
+    OneSignalDeferred.push(OneSignal => resolve(OneSignal.User.PushSubscription.optedIn ? 'inscrita ✓' : 'não inscrita'));
+  });
+}
 
 function reminderCard(){
   if (!canNotify || S.reminder === 'on' || Notification.permission === 'denied') return '';
@@ -1305,6 +1335,7 @@ async function enableReminder(){
   const perm = await Notification.requestPermission();
   if (perm !== 'granted'){ toast('Sem a permissão, o app não consegue mandar o lembrete. Dá para ativar depois nas configurações do celular.'); home(); return; }
   const ok = await registerReminder();
+  pushOptIn();
   S.reminder = ok ? 'on' : 'sem-suporte'; save(); home();
   toast(ok ? 'Lembrete ativado! 💚' : 'Permissão dada, mas este navegador não faz lembretes automáticos. Use o app instalado, pelo Chrome.');
 }
@@ -1316,7 +1347,7 @@ async function reminderStatus(){
     const reg = await navigator.serviceWorker.ready;
     if ('periodicSync' in reg) sync = (await reg.periodicSync.getTags()).includes('lembrete-diario') ? 'registrado' : 'não registrado';
   } catch(e){}
-  return `Permissão de notificação: ${perm} · Lembrete automático: ${sync}`;
+  return `Permissão de notificação: ${perm} · Lembrete automático: ${sync} · Mensagens do ${GUI} (OneSignal): ${await pushStatus()}`;
 }
 
 /* ---------- Notícia da semana ---------- */

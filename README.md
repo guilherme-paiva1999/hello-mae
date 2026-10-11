@@ -34,7 +34,7 @@ Atualizações: basta fazer push. O app baixa a versão nova em segundo plano e 
 |---|---|
 | `index.html` | O app |
 | `content.js` | Todo o conteúdo: etapas, conversas, histórias, jogos, checklist |
-| `config.js` | Número do WhatsApp e endereço da planilha de comentários |
+| `config.js` | Endereço da planilha de comentários e App ID do OneSignal |
 | `audio/` | Um MP3 por frase, com voz neural |
 | `img/` | Avatares animados (WebP) e versões paradas (PNG) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | O que transforma o site em app instalável e offline |
@@ -44,6 +44,31 @@ Atualizações: basta fazer push. O app baixa a versão nova em segundo plano e 
 ## Configurar o WhatsApp
 
 O número **não** fica no repositório. No celular dela, abra o app com `#admin` no fim do endereço e salve o número em "WhatsApp do Gui". Ele fica guardado só naquele aparelho.
+
+## Notificações
+
+- **Lembrete automático:** depois de 24 horas sem uso, o próprio celular mostra "Esqueceu que tem filho? Não me ama mais? 😢" (com vibração). Ela ativa em **🔔 Ativar lembrete**, na tela inicial. Teste em **Área do Gui → Testar lembrete agora**.
+- **Mensagens do Gui (OneSignal):** você escreve uma mensagem e ela chega no celular dela na hora, mesmo com o app fechado.
+
+### Configurar o OneSignal (uns 10 minutos, gratuito)
+
+1. Crie uma conta em https://onesignal.com.
+2. **New App/Website** → nome `Hello, Mãe!` → plataforma **Web** → **Typical Site**.
+3. Em **Site Setup**:
+   - Site Name: `Hello, Mãe!`
+   - Site URL: `https://guilherme-paiva1999.github.io`
+   - Default Icon URL (opcional): `https://guilherme-paiva1999.github.io/hello-mae/icons/icon-192.png`
+4. Em **Advanced Push Settings** (ou "Service Worker"), ligue a opção de personalizar o service worker e preencha:
+   - Path to service worker files: `/hello-mae/`
+   - Main service worker filename: `sw.js`
+   - Updater service worker filename: `sw.js`
+   - Service worker registration scope: `/hello-mae/`
+5. Pule a parte de "Permission Prompt" (o app já tem o botão **Ativar lembrete**, que serve para as duas coisas).
+6. Salve e copie o **App ID** (um código como `a1b2c3d4-...`). Cole em `onesignalAppId`, no `config.js`, e faça commit e push.
+   O App ID pode ficar público. **Nunca** coloque a "REST API Key" no repositório.
+7. No celular dela: feche e abra o app, toque em **Ativar lembrete → Permitir** (se ainda não tiver feito). Na **Área do Gui**, o status deve mostrar "Mensagens do Gui (OneSignal): inscrita ✓".
+
+**Para mandar uma mensagem:** no painel do OneSignal (funciona no navegador do celular), **Messages → Push → New Push**, escreva o título e o texto e clique em **Send**.
 
 ## Configurar a planilha de comentários (uns 5 minutos)
 

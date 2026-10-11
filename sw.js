@@ -8,6 +8,13 @@
    Mudou a lista de arquivos fixos abaixo? Aumente VERSION.
    AUDIO_VERSION é atualizado sozinho pelo tools/build-audio.mjs. */
 
+// Mensagens enviadas pelo Gui (OneSignal): só carrega se o App ID estiver no config.js
+self.window = self;
+try { importScripts('config.js'); } catch (e) {}
+if (self.HM_CONFIG && self.HM_CONFIG.onesignalAppId) {
+  try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
+}
+
 const VERSION = 'v4';
 const NETWORK_TIMEOUT = 3000;
 const AUDIO_VERSION = '1a5dp0s';
@@ -26,7 +33,6 @@ self.addEventListener('install', event => {
     const core = await caches.open(CORE);
     await core.addAll(SHELL);
     // Guarda todos os áudios para ela usar no avião, sem internet
-    self.window = self;
     try { importScripts('audio/index.js'); } catch (e) {}
     const media = await caches.open(MEDIA);
     const files = (self.HM_AUDIO || []).map(n => `audio/${n}.mp3`);
@@ -129,8 +135,9 @@ self.addEventListener('message', event => {
   if (event.data === 'testar-lembrete') event.waitUntil(remind(true));
 });
 
-// Tocou na notificação: abre o app
+// Tocou no lembrete: abre o app (as mensagens do OneSignal ele mesmo trata)
 self.addEventListener('notificationclick', event => {
+  if (event.notification.tag !== 'lembrete') return;
   event.notification.close();
   event.waitUntil((async () => {
     const open = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
