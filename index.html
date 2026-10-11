@@ -691,6 +691,8 @@ function home(){
       <button class="btn wa" data-act="callGui">💬 Mandar mensagem para o ${esc(GUI)}</button>
     </section>
 
+    ${reminderCard()}
+
     ${installCard()}
 
     <section class="card">
@@ -1268,6 +1270,55 @@ function callGui(){
   setTimeout(() => { if (el.isConnected) location.href = url; }, 1800);
 }
 
+/* ---------- Lembrete diário ----------
+   O app grava a hora do último uso num cache que o service worker também lê.
+   Se ela passar mais de 24 horas sem usar, o sw.js mostra a notificação. */
+
+const canNotify = 'Notification' in window && 'serviceWorker' in navigator;
+async function markUsed(){
+  try { await (await caches.open('hello-mae-state')).put('__last-use', new Response(String(Date.now()))); } catch(e){}
+}
+markUsed();
+setInterval(() => { if (document.visibilityState === 'visible') markUsed(); }, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') markUsed(); });
+
+async function registerReminder(){
+  const reg = await navigator.serviceWorker.ready;
+  if (!('periodicSync' in reg)) return false;
+  try { await reg.periodicSync.register('lembrete-diario', {minInterval: 12 * 60 * 60 * 1000}); return true; }
+  catch(e){ return false; }
+}
+// Já ativado antes: renova o registro a cada abertura
+if (canNotify && S.reminder === 'on' && Notification.permission === 'granted') registerReminder();
+
+function reminderCard(){
+  if (!canNotify || S.reminder === 'on' || Notification.permission === 'denied') return '';
+  return `<section class="card">
+    <div class="card-row">${avatar('triste', 's')}
+      <div><h2>Lembrete diário</h2><p>Se você ficar mais de um dia sem estudar, o app manda um recadinho do ${esc(GUI)}. 😉</p></div></div>
+    <button class="btn secondary" data-act="enableReminder">🔔 Ativar lembrete</button>
+  </section>`;
+}
+
+async function enableReminder(){
+  if (!canNotify){ toast('Este celular não permite lembretes.'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted'){ toast('Sem a permissão, o app não consegue mandar o lembrete. Dá para ativar depois nas configurações do celular.'); home(); return; }
+  const ok = await registerReminder();
+  S.reminder = ok ? 'on' : 'sem-suporte'; save(); home();
+  toast(ok ? 'Lembrete ativado! 💚' : 'Permissão dada, mas este navegador não faz lembretes automáticos. Use o app instalado, pelo Chrome.');
+}
+
+async function reminderStatus(){
+  const perm = canNotify ? Notification.permission : 'sem suporte';
+  let sync = 'sem suporte';
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if ('periodicSync' in reg) sync = (await reg.periodicSync.getTags()).includes('lembrete-diario') ? 'registrado' : 'não registrado';
+  } catch(e){}
+  return `Permissão de notificação: ${perm} · Lembrete automático: ${sync}`;
+}
+
 /* ---------- Notícia da semana ---------- */
 
 function newsCard(){
@@ -1331,6 +1382,12 @@ function admin(){
       </form>
       <div id="adm-list" class="sec"></div>`
     : `<div class="alert">A planilha de comentários ainda não foi configurada. Veja o passo a passo no README do projeto.</div>`}
+    <section class="card">
+      <h2>Lembrete diário</h2>
+      <p>Depois de 24 horas sem uso, o app mostra: "Esqueceu que tem filho? Não me ama mais? 😢"</p>
+      <p class="hint" id="rem-status">Verificando...</p>
+      <button class="btn secondary" data-act="testReminder">🔔 Testar lembrete agora</button>
+    </section>
     <form id="f-wa" class="card">
       <h2>WhatsApp do ${esc(GUI)}</h2>
       <p>Fica salvo só neste celular, não vai para o GitHub. Configure no celular dela.</p>
@@ -1345,6 +1402,7 @@ function admin(){
     </section>
   </div>`);
   if (key && CFG.feedbackUrl) loadAdmin(key);
+  reminderStatus().then(t => { const st = $('#rem-status'); if (st) st.textContent = t; });
 }
 function admItem(f){
   const d = new Date(f.at);
@@ -1555,6 +1613,17 @@ const ACT = {
   closeCalling(){ $$('.calling').forEach(e => e.remove()); },
   leaveAdmin(){ history.replaceState(null, '', location.pathname); home(); },
   openAdmin(){ history.replaceState(null, '', '#admin'); admin(); },
+  enableReminder,
+  async testReminder(){
+    if (!canNotify){ toast('Este navegador não mostra notificações.'); return; }
+    if (Notification.permission !== 'granted' && await Notification.requestPermission() !== 'granted'){
+      toast('É preciso permitir as notificações para testar.'); return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    (reg.active || navigator.serviceWorker.controller).postMessage('testar-lembrete');
+    toast('Pronto! A notificação deve aparecer em alguns segundos.');
+    const st = $('#rem-status'); if (st) st.textContent = await reminderStatus();
+  },
   async install(){
     if (!installEvt) return;
     installEvt.prompt();

@@ -4,6 +4,7 @@
      para uma atualização no GitHub aparecer logo que ela abrir. Sem internet, ou se demorar
      mais de 3 segundos, usa a cópia guardada.
    - Áudios, imagens e fontes: usa o que está guardado; se faltar, baixa e guarda.
+   - Lembrete diário: veja o fim do arquivo.
    Mudou a lista de arquivos fixos abaixo? Aumente VERSION.
    AUDIO_VERSION é atualizado sozinho pelo tools/build-audio.mjs. */
 
@@ -85,5 +86,51 @@ self.addEventListener('fetch', event => {
     if (res && res.ok) return res;
     const hit = await core.match(key, {ignoreSearch: true});
     return hit || (await fresh) || new Response('Sem internet e sem cópia guardada.', {status: 503});
+  })());
+});
+
+/* ---------- Lembrete quando ela fica mais de 24 horas sem usar ----------
+   O app grava a hora do último uso. O Chrome acorda este arquivo de tempos em tempos
+   (Periodic Background Sync, mais ou menos a cada 12 horas); se já passou de 24 horas
+   sem uso, mostra a notificação. No máximo um lembrete por dia. */
+
+const STATE = 'hello-mae-state';
+const DAY = 24 * 60 * 60 * 1000;
+
+async function readTime(key){
+  const r = await (await caches.open(STATE)).match(key);
+  return r ? Number(await r.text()) || 0 : 0;
+}
+async function writeTime(key, t){ await (await caches.open(STATE)).put(key, new Response(String(t))); }
+
+async function remind(force){
+  const now = Date.now(), lastUse = await readTime('__last-use'), lastSent = await readTime('__last-reminder');
+  if (!force && (!lastUse || now - lastUse < DAY || now - lastSent < DAY)) return;
+  await writeTime('__last-reminder', now);
+  await self.registration.showNotification('Hello, Mãe! 😢', {
+    body: 'Esqueceu que tem filho? Não me ama mais? 😢',
+    icon: 'img/triste.png',
+    tag: 'lembrete',
+    renotify: true,
+    data: {url: './'}
+  });
+}
+
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'lembrete-diario') event.waitUntil(remind(false));
+});
+
+// Botão "Testar lembrete agora", na Área do Gui
+self.addEventListener('message', event => {
+  if (event.data === 'testar-lembrete') event.waitUntil(remind(true));
+});
+
+// Tocou na notificação: abre o app
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const open = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
+    if (open.length) return open[0].focus();
+    return self.clients.openWindow('./');
   })());
 });
