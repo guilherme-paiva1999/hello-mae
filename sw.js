@@ -96,6 +96,8 @@ self.addEventListener('fetch', event => {
 
 const STATE = 'hello-mae-state';
 const DAY = 24 * 60 * 60 * 1000;
+// Vibração "chamando a atenção": três toques curtos, pausa e um longo (em milissegundos)
+const VIBRATE = [200, 100, 200, 100, 200, 300, 600];
 
 async function readTime(key){
   const r = await (await caches.open(STATE)).match(key);
@@ -112,6 +114,8 @@ async function remind(force){
     icon: 'img/triste.png',
     tag: 'lembrete',
     renotify: true,
+    silent: false,
+    vibrate: VIBRATE,
     data: {url: './'}
   });
 }

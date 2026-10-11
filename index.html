@@ -1621,6 +1621,7 @@ const ACT = {
     }
     const reg = await navigator.serviceWorker.ready;
     (reg.active || navigator.serviceWorker.controller).postMessage('testar-lembrete');
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200, 300, 600]);
     toast('Pronto! A notificação deve aparecer em alguns segundos.');
     const st = $('#rem-status'); if (st) st.textContent = await reminderStatus();
   },
