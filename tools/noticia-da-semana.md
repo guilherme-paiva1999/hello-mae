@@ -2,7 +2,9 @@
 
 Adicione uma notícia nova e real ao app de inglês **Hello, Mãe!** (nível B1, para uma brasileira que vai viajar sozinha como turista para a Holanda), gere os áudios e publique no GitHub.
 
-Repositório local: `C:\Users\guipa\OneDrive\Área de Trabalho\hello-mae`
+Repositório local: `C:\Users\guipa\OneDrive\Área de Trabalho\Hello, Mãe - Google Play package\hello-mae`
+- Se essa pasta não existir, procure na Área de Trabalho (até 4 níveis) uma pasta `hello-mae` com `.git` cujo `origin` seja `https://github.com/guilherme-paiva1999/hello-mae.git`, e avise o novo endereço no relatório.
+- A pasta acima do repositório guarda a chave de assinatura do APK (`signing.keystore`, `signing-key-info.txt`): nunca mova, abra nem adicione esses arquivos ao Git.
 Site: https://guilherme-paiva1999.github.io/hello-mae/
 
 ## Passos
