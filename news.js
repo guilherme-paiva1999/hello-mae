@@ -11,6 +11,20 @@
    - questions: 2 ou 3 perguntas {t:'choice', q, options} (a primeira opção é a certa) */
 window.HM_NEWS = [
   {
+    id:'2026-10-13', date:'13 de outubro de 2026', title:'Clocks go back in the Netherlands', source:'IamExpat.nl',
+    paras:[
+      {en:"On Sunday, 25 October, the Netherlands changes the clocks. At 3 a.m., the time goes back to 2 a.m. This is the start of [[winter time|horário de inverno]], called wintertijd in Dutch. You get one extra hour of sleep, but the evenings become dark much earlier.", pt:'No domingo, 25 de outubro, a Holanda muda os relógios. Às 3 da manhã, a hora volta para as 2. É o começo do horário de inverno, chamado de wintertijd em holandês. Você ganha uma hora extra de sono, mas as noites escurecem bem mais cedo.'},
+      {en:"Your phone will change the time by itself, but check your watch and your alarm. Trains and planes use the new time too, so read your ticket carefully. A late breakfast is also a nice way to enjoy the extra hour on that Sunday!", pt:'Seu celular muda a hora sozinho, mas confira seu relógio e seu despertador. Trens e aviões também usam a hora nova, então leia sua passagem com atenção. Um café da manhã tardio também é uma boa maneira de aproveitar a hora extra naquele domingo!'},
+      {en:"There is another useful rule. Since 1 October, public transport inspectors can use the driving-licence register to identify passengers who have no ID. Then they can give a [[fine|multa]] without calling the police. So always carry your passport or [[ID card|documento de identidade]] on trains, trams and buses.", pt:'Há outra regra útil. Desde 1º de outubro, os fiscais do transporte público podem usar o registro de carteiras de motorista para identificar passageiros sem documento. Assim, eles podem dar uma multa sem chamar a polícia. Por isso, sempre leve seu passaporte ou documento de identidade em trens, bondes e ônibus.'},
+      {en:"At the station, you can use the ticket desk. Say: \"Excuse me, could I have a single ticket to Utrecht, please?\" Then look at the board and check the platform number. Dutch trains are very punctual, so do not be late, especially on the day the clocks change!", pt:'Na estação, você pode usar o balcão de passagens. Diga: "Com licença, posso ter uma passagem só de ida para Utrecht, por favor?" Depois olhe o painel e confira o número da plataforma. Os trens holandeses são muito pontuais, então não se atrase, principalmente no dia da mudança de hora!'}
+    ],
+    questions:[
+      {t:'choice', q:'O que acontece na Holanda no domingo, 25 de outubro?', options:['Os relógios voltam uma hora, das 3 para as 2 da manhã','Os relógios adiantam uma hora','Os trens não funcionam'], why:'<span class="eng">At 3 a.m., the time goes back to 2 a.m.</span> = às 3 da manhã, a hora volta para as 2.'},
+      {t:'choice', q:'O que os fiscais do transporte público podem fazer desde 1º de outubro?', options:['Usar o registro de carteiras de motorista para identificar quem está sem documento','Cobrar a passagem em dinheiro dentro do trem','Pedir o passaporte só de estrangeiros']},
+      {t:'choice', q:'O que a turista deve conferir na estação, segundo o texto?', options:['O número da plataforma no painel','A cor do trem','O nome do maquinista']}
+    ]
+  },
+  {
     id:'2026-10-07', date:'7 de outubro de 2026', title:'Dutch television turns 75', source:'DutchNews.nl',
     paras:[
       {en:"On 2 October 1951, the Netherlands had its first television [[broadcast|transmissão]]. It came live from a small studio in the town of Bussum and lasted about ninety minutes. The programme was a play, and the Dutch Royal Family watched it at home in their palace.", pt:'Em 2 de outubro de 1951, a Holanda teve sua primeira transmissão de televisão. Ela foi ao vivo, de um pequeno estúdio na cidade de Bussum, e durou cerca de noventa minutos. O programa era uma peça de teatro, e a Família Real holandesa assistiu em casa, no palácio.'},
