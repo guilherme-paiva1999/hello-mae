@@ -20,6 +20,11 @@ function sheet_() {
   return sh;
 }
 
+// Rode uma vez pelo editor (botão Executar): cria a aba "Comentários" e pede a autorização do Google.
+function instalar() {
+  sheet_();
+}
+
 function out_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
