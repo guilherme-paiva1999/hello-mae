@@ -84,6 +84,12 @@ O número **não** fica no repositório. No celular dela, abra o app com `#admin
 
 Pronto: os comentários dela aparecem na planilha e em `#admin` (com a sua senha). Se ela estiver sem internet, o comentário fica guardado no celular e é enviado depois.
 
+### Responder os comentários
+
+Em `#admin`, cada comentário tem o campo **Responder para ela**. A resposta fica gravada na planilha (colunas "Resposta do Gui" e "Respondido em") e aparece na tela inicial do app dela, no cartão **💌 O Gui respondeu**, por **24 horas**. Depois disso, some sozinha. Para mudar uma resposta, use **Mudar resposta**.
+
+Depois de mudar o `tools/feedback-apps-script.gs`, publique a mudança no Apps Script: **Implantar → Gerenciar implantações → lápis → Versão: Nova versão → Implantar**. Assim o endereço continua o mesmo.
+
 ## Áudio
 
 As frases são geradas com as vozes neurais da Microsoft (via [edge-tts](https://github.com/rany2/edge-tts)): **Ava** para a voz dela e do narrador, **Andrew** para oficiais e atendentes e **Francisca** (português do Brasil) para ler as opções de resposta em português. Ao tocar numa opção, o app lê o que está escrito, no idioma da opção. O botão "Devagar" toca o mesmo arquivo a 70% da velocidade. Se faltar algum arquivo, o app usa a voz do aparelho.

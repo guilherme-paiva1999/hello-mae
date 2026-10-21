@@ -124,6 +124,13 @@ textarea{resize:vertical;min-height:96px}
 .card-row > div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .gui-card{border-color:var(--wa)}
 .news-card{border-color:var(--sun)}
+.reply-card{border-color:var(--wa);border-width:3px}
+.reply-item{background:var(--surface-2);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.reply-you{color:var(--muted);font-size:.92rem;font-style:italic}
+.reply-text{font-size:1.15rem;font-weight:700;color:var(--ink)}
+.adm-reply{background:var(--good-soft);color:var(--good-ink);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.adm-reply .adm-text{color:var(--ink)}
+.adm-reply-form{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .new-badge{display:inline-block;background:var(--sun);color:var(--sun-ink);border-radius:99px;padding:2px 10px;font-size:.72rem;font-family:var(--f-body);font-weight:700;vertical-align:middle;margin-left:6px;letter-spacing:.02em}
 .news-card .n-title{color:var(--ink);font-weight:700}
 .news-card details summary{cursor:pointer;font-weight:700;color:var(--brand-deep);padding:6px 0;min-height:44px;display:flex;align-items:center}
@@ -393,7 +400,7 @@ const PHRASES = {};
 STAGES.forEach(s => s.steps.forEach(st => { if (st.t === 'phrase') PHRASES[st.en] = {en: st.en, pt: st.pt, v: st.v, stage: s.id}; }));
 
 function load(){
-  const def = {name:'', done:{}, deck:{}, streak:{n:0, last:null}, best:{}, check:{}, feedback:[], outbox:[], newsRead:{}};
+  const def = {name:'', done:{}, deck:{}, streak:{n:0, last:null}, best:{}, check:{}, feedback:[], outbox:[], newsRead:{}, replies:{}};
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return Object.assign(def, JSON.parse(raw));
@@ -628,6 +635,7 @@ function welcome(){
 function home(){
   L = null; R = null; G = null; tts.stop();
   if (location.hash === '#admin') return admin();
+  fetchReplies();
   const h = new Date().getHours();
   const greet = h < 12 ? ['Good morning','Bom dia'] : h < 18 ? ['Good afternoon','Boa tarde'] : ['Good evening','Boa noite'];
   const nextIdx = STAGES.findIndex(s => !S.done[s.id]);
@@ -695,6 +703,8 @@ function home(){
         ${stars ? `<span class="badge"><span class="st">★</span> <b>${stars}</b> ${stars===1?'estrela':'estrelas'}</span>` : ''}
       </div>
     </header>
+
+    ${repliesCard()}
 
     ${nextCard}
 
@@ -1350,6 +1360,46 @@ async function reminderStatus(){
   return `Permissão de notificação: ${perm} · Lembrete automático: ${sync} · Mensagens do ${GUI} (OneSignal): ${await pushStatus()}`;
 }
 
+/* ---------- Respostas do Gui ----------
+   O app pergunta à planilha se o Gui respondeu algum comentário dela e mostra na tela
+   inicial só as respostas das últimas 24 horas. Depois disso, cada uma some sozinha. */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+let repliesFetchedAt = 0;
+async function fetchReplies(){
+  if (!CFG.feedbackUrl || !S.feedback.length || navigator.onLine === false) return;
+  if (Date.now() - repliesFetchedAt < 5 * 60 * 1000) return;
+  repliesFetchedAt = Date.now();
+  const ids = S.feedback.slice(0, 60).map(f => f.id).join(',');
+  try {
+    const data = await (await fetch(`${CFG.feedbackUrl}?action=replies&ids=${encodeURIComponent(ids)}`)).json();
+    if (!data.ok) return;
+    const before = JSON.stringify(S.replies || {});
+    S.replies = {};
+    data.items.forEach(r => { S.replies[r.id] = {text: r.text, reply: r.reply, at: r.at}; });
+    if (JSON.stringify(S.replies) !== before){ save(); if (!L && !R && !G && $('.home')) home(); }
+  } catch(e){}
+}
+function recentReplies(){
+  const now = Date.now();
+  return Object.values(S.replies || {})
+    .filter(r => r.at && now - new Date(r.at).getTime() < DAY_MS)
+    .sort((a, b) => new Date(b.at) - new Date(a.at));
+}
+function repliesCard(){
+  const list = recentReplies();
+  if (!list.length) return '';
+  return `<section class="card reply-card">
+    <div class="card-row">${avatar('feliz', 's')}
+      <div><h2>💌 O ${esc(GUI)} respondeu</h2><p>As respostas somem depois de 24 horas.</p></div></div>
+    ${list.map(r => `<div class="reply-item">
+      ${r.text ? `<p class="reply-you">Você escreveu: "${esc(r.text)}"</p>` : ''}
+      <p class="reply-text">${esc(r.reply)}</p>
+      <p class="hint">${new Date(r.at).toLocaleString('pt-BR', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}</p>
+    </div>`).join('')}
+  </section>`;
+}
+
 /* ---------- Notícia da semana ---------- */
 
 function newsCard(){
@@ -1402,7 +1452,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 
 function admin(){
   let key = ''; try { key = localStorage.getItem('hello-mae-admin') || ''; } catch(e){}
-  const local = S.feedback.map(admItem).join('') || '<p class="hint">Nenhum comentário neste aparelho.</p>';
+  const local = S.feedback.map(f => admItem(f)).join('') || '<p class="hint">Nenhum comentário neste aparelho.</p>';
   render(`<div class="screen">
     <header class="lbar"><button class="icon-btn" data-act="leaveAdmin" aria-label="Sair do admin">←</button><h1 class="title">Área do administrador</h1></header>
     ${CFG.feedbackUrl ? `
@@ -1435,16 +1485,27 @@ function admin(){
   if (key && CFG.feedbackUrl) loadAdmin(key);
   reminderStatus().then(t => { const st = $('#rem-status'); if (st) st.textContent = t; });
 }
-function admItem(f){
+// canReply: comentários vindos da planilha (têm id) ganham o campo de resposta do Gui
+function admItem(f, canReply){
   const d = new Date(f.at);
   const face = typeof f.rating === 'number' ? (FACES[f.rating] ? FACES[f.rating].join(' ') : '') : (f.rating || '');
+  const rd = f.repliedAt ? new Date(f.repliedAt) : null;
+  const reply = !canReply || !f.id ? '' : f.reply
+    ? `<div class="adm-reply"><b>Sua resposta</b>${rd && !isNaN(rd) ? ` · ${rd.toLocaleString('pt-BR')}` : ''}<p class="adm-text">${esc(f.reply)}</p>
+        <button class="linkbtn" data-act="editReply">Mudar resposta</button></div>
+      <div class="adm-reply-form" hidden>${replyForm(f.id, f.reply)}</div>`
+    : `<div class="adm-reply-form">${replyForm(f.id, '')}</div>`;
   return `<div class="adm-item">
     <div class="adm-meta"><span>${isNaN(d) ? esc(f.at) : d.toLocaleString('pt-BR')}</span><span>${esc(f.name || '')}</span>${face ? `<span>${esc(face)}</span>` : ''}</div>
     <div class="adm-where">${esc(f.title || '')}${f.step ? ` · ${esc(f.step)}` : ''}</div>
     ${f.text ? `<p class="adm-text">${esc(f.text)}</p>` : ''}
     ${f.progress ? `<div class="adm-meta">${esc(f.progress)}</div>` : ''}
+    ${reply}
   </div>`;
 }
+const replyForm = (id, text) => `<label class="hint" for="rp-${esc(id)}">Responder para ela (aparece no app dela por 24 horas)</label>
+  <textarea id="rp-${esc(id)}" rows="2" maxlength="1000" placeholder="Ex.: Que bom, mãe! Continue assim 💚">${esc(text)}</textarea>
+  <button class="btn secondary" data-act="sendReply" data-id="${esc(id)}">💌 Enviar resposta</button>`;
 async function loadAdmin(key){
   const box = $('#adm-list'); if (!box) return;
   box.innerHTML = '<p class="hint">Carregando...</p>';
@@ -1453,7 +1514,7 @@ async function loadAdmin(key){
     const data = await res.json();
     if (!data.ok){ box.innerHTML = '<p class="err">Senha incorreta.</p>'; return; }
     try { localStorage.setItem('hello-mae-admin', key); } catch(e){}
-    box.innerHTML = `<h3>Todos os comentários (${data.items.length})</h3>` + (data.items.map(admItem).join('') || '<p class="hint">Nenhum comentário ainda.</p>');
+    box.innerHTML = `<h3>Todos os comentários (${data.items.length})</h3>` + (data.items.map(f => admItem(f, true)).join('') || '<p class="hint">Nenhum comentário ainda.</p>');
   } catch(e){
     box.innerHTML = '<p class="err">Não consegui acessar a planilha. Confira a internet e o endereço em config.js.</p>';
   }
@@ -1640,6 +1701,28 @@ const ACT = {
     b.parentElement.querySelectorAll('.face').forEach(f => f.setAttribute('aria-pressed', String(f === b)));
   },
   sendfb(b){ sendFeedback(b.closest('.fbcard')); },
+  editReply(b){
+    const item = b.closest('.adm-item');
+    item.querySelector('.adm-reply').hidden = true;
+    item.querySelector('.adm-reply-form').hidden = false;
+    item.querySelector('textarea').focus();
+  },
+  async sendReply(b){
+    let key = ''; try { key = localStorage.getItem('hello-mae-admin') || ''; } catch(e){}
+    const text = b.closest('.adm-item').querySelector('textarea').value.trim();
+    if (!text){ toast('Escreva a resposta antes de enviar.'); return; }
+    b.disabled = true; b.textContent = 'Enviando...';
+    try {
+      const res = await fetch(`${CFG.feedbackUrl}?action=reply&key=${encodeURIComponent(key)}&id=${encodeURIComponent(b.dataset.id)}&text=${encodeURIComponent(text)}`);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'erro');
+      toast('Resposta enviada! Ela vai ver no app nas próximas 24 horas. 💚');
+      loadAdmin(key);
+    } catch(e){
+      b.disabled = false; b.textContent = '💌 Enviar resposta';
+      toast(e.message === 'senha' ? 'Senha incorreta. Entre de novo com a senha.' : 'Não consegui enviar. Confira a internet e tente de novo.');
+    }
+  },
   callGui,
   closeCalling(){ $$('.calling').forEach(e => e.remove()); },
   leaveAdmin(){ history.replaceState(null, '', location.pathname); home(); },
