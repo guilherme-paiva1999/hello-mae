@@ -124,7 +124,8 @@ textarea{resize:vertical;min-height:96px}
 .card-row > div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .gui-card{border-color:var(--wa)}
 .news-card{border-color:var(--sun)}
-.reply-card{border-color:var(--wa);border-width:3px}
+.reply-card.has-new{border-color:var(--wa);border-width:3px}
+.replies-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:28px 16px;border:2px dashed var(--line);border-radius:20px}
 .reply-item{background:var(--surface-2);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 .reply-you{color:var(--muted);font-size:.92rem;font-style:italic}
 .reply-text{font-size:1.15rem;font-weight:700;color:var(--ink)}
@@ -1361,24 +1362,28 @@ async function reminderStatus(){
 }
 
 /* ---------- Respostas do Gui ----------
-   O app pergunta à planilha se o Gui respondeu algum comentário dela e mostra na tela
-   inicial só as respostas das últimas 24 horas. Depois disso, cada uma some sozinha. */
+   Área "Respostas", sempre visível na tela inicial. O app pergunta à planilha se o Gui
+   respondeu algum comentário dela e mostra só as respostas das últimas 24 horas.
+   Sem respostas novas, a área fica vazia. */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 let repliesFetchedAt = 0;
-async function fetchReplies(){
-  if (!CFG.feedbackUrl || !S.feedback.length || navigator.onLine === false) return;
-  if (Date.now() - repliesFetchedAt < 5 * 60 * 1000) return;
+// force: ignora o intervalo de 5 minutos (quando ela abre a área Respostas ou toca em Atualizar)
+async function fetchReplies(force){
+  if (!CFG.feedbackUrl || !S.feedback.length || navigator.onLine === false) return false;
+  if (!force && Date.now() - repliesFetchedAt < 5 * 60 * 1000) return false;
   repliesFetchedAt = Date.now();
   const ids = S.feedback.slice(0, 60).map(f => f.id).join(',');
   try {
     const data = await (await fetch(`${CFG.feedbackUrl}?action=replies&ids=${encodeURIComponent(ids)}`)).json();
-    if (!data.ok) return;
+    if (!data.ok) return false;
     const before = JSON.stringify(S.replies || {});
     S.replies = {};
     data.items.forEach(r => { S.replies[r.id] = {text: r.text, reply: r.reply, at: r.at}; });
-    if (JSON.stringify(S.replies) !== before){ save(); if (!L && !R && !G && $('.home')) home(); }
-  } catch(e){}
+    const changed = JSON.stringify(S.replies) !== before;
+    if (changed){ save(); if (!L && !R && !G && $('.home')) home(); }
+    return true;
+  } catch(e){ return false; }
 }
 function recentReplies(){
   const now = Date.now();
@@ -1386,18 +1391,36 @@ function recentReplies(){
     .filter(r => r.at && now - new Date(r.at).getTime() < DAY_MS)
     .sort((a, b) => new Date(b.at) - new Date(a.at));
 }
+
+// Cartão fixo na tela inicial: sempre aparece, com quantas respostas novas existem
 function repliesCard(){
-  const list = recentReplies();
-  if (!list.length) return '';
-  return `<section class="card reply-card">
-    <div class="card-row">${avatar('feliz', 's')}
-      <div><h2>💌 O ${esc(GUI)} respondeu</h2><p>As respostas somem depois de 24 horas.</p></div></div>
-    ${list.map(r => `<div class="reply-item">
-      ${r.text ? `<p class="reply-you">Você escreveu: "${esc(r.text)}"</p>` : ''}
-      <p class="reply-text">${esc(r.reply)}</p>
-      <p class="hint">${new Date(r.at).toLocaleString('pt-BR', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}</p>
-    </div>`).join('')}
+  const n = recentReplies().length;
+  return `<section class="card reply-card ${n ? 'has-new' : ''}">
+    <div class="card-row"><span class="nc-emoji" style="background:var(--good-soft)" aria-hidden="true">💌</span>
+      <div><h2>Respostas do ${esc(GUI)}${n ? `<span class="new-badge">${n === 1 ? '1 nova' : n + ' novas'}</span>` : ''}</h2>
+        <p>${n ? `O ${esc(GUI)} respondeu ${n === 1 ? 'um comentário seu' : n + ' comentários seus'}!` : 'Nenhuma resposta nova por enquanto.'}</p></div></div>
+    <button class="btn ${n ? 'primary' : 'secondary'}" data-act="replies">${n ? 'Ler as respostas' : 'Abrir respostas'}</button>
   </section>`;
+}
+
+// Tela "Respostas"
+function repliesScreen(loading){
+  const list = recentReplies();
+  render(`<div class="screen">
+    <header class="lbar"><button class="icon-btn" data-act="home" aria-label="Voltar ao início">←</button><h1 class="title">Respostas do ${esc(GUI)}</h1></header>
+    <p class="hint">As respostas do ${esc(GUI)} aos seus comentários ficam aqui por 24 horas. Depois somem sozinhas.</p>
+    ${list.length ? list.map(r => `<div class="reply-item">
+        ${r.text ? `<p class="reply-you">Você escreveu: "${esc(r.text)}"</p>` : ''}
+        <p class="reply-text">💌 ${esc(r.reply)}</p>
+        <p class="hint">${new Date(r.at).toLocaleString('pt-BR', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}</p>
+      </div>`).join('')
+    : `<div class="replies-empty">${avatar('pensativo', 'm')}
+        <p><b>${loading ? 'Procurando respostas...' : 'Nenhuma resposta nova.'}</b></p>
+        <p class="hint">${loading ? 'Só um instante.' : `Quando o ${esc(GUI)} responder um comentário seu, a resposta aparece aqui.`}</p>
+      </div>`}
+    <button class="btn secondary" data-act="refreshReplies">🔄 Atualizar</button>
+    ${primary('Voltar para o início', 'home')}
+  </div>`);
 }
 
 /* ---------- Notícia da semana ---------- */
@@ -1701,6 +1724,17 @@ const ACT = {
     b.parentElement.querySelectorAll('.face').forEach(f => f.setAttribute('aria-pressed', String(f === b)));
   },
   sendfb(b){ sendFeedback(b.closest('.fbcard')); },
+  async replies(){
+    repliesScreen(!recentReplies().length);
+    await fetchReplies(true);
+    if ($('.replies-empty, .reply-item') && !L && !R && !G && !$('.home')) repliesScreen(false);
+  },
+  async refreshReplies(b){
+    b.disabled = true; b.textContent = 'Atualizando...';
+    const ok = await fetchReplies(true);
+    repliesScreen(false);
+    if (!ok) toast(navigator.onLine === false ? 'Sem internet agora. Tente de novo mais tarde.' : 'Pronto, está tudo atualizado.');
+  },
   editReply(b){
     const item = b.closest('.adm-item');
     item.querySelector('.adm-reply').hidden = true;
