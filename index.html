@@ -347,7 +347,7 @@ ul.checks li::before{content:'✓';position:absolute;left:4px;top:0;color:var(--
 </style>
 
 <div id="splash" class="splash" aria-hidden="true">
-  <img id="splash-img" src="img/telefone.webp" alt="" width="240" height="240">
+  <img id="splash-img" src="img/feliz.webp" alt="" width="240" height="240">
   <p>Hello, Mãe!</p>
 </div>
 <div id="app"></div>
@@ -1813,11 +1813,11 @@ document.addEventListener('submit', e => {
 });
 window.addEventListener('hashchange', () => { if (location.hash === '#admin') admin(); });
 
-// Abertura: animação do telefone por uns 2 segundos (toque para pular)
+// Abertura: animação do avatar feliz (a mesma imagem do ícone) por uns 2 segundos (toque para pular)
 (function splash(){
   const el = $('#splash');
   if (!el) return;
-  if (reduceMotion) $('#splash-img').src = 'img/telefone.png';
+  if (reduceMotion) $('#splash-img').src = 'img/feliz.png';
   const hide = () => { el.classList.add('out'); setTimeout(() => el.remove(), 500); };
   if (location.hash === '#admin') return el.remove();
   el.addEventListener('click', hide);
