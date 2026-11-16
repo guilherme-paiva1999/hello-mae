@@ -17,7 +17,7 @@ if (self.HM_CONFIG && self.HM_CONFIG.onesignalAppId) {
 
 const VERSION = 'v4';
 const NETWORK_TIMEOUT = 3000;
-const AUDIO_VERSION = '10bklua';
+const AUDIO_VERSION = '13neon2';
 const CORE = `hello-mae-core-${VERSION}`;
 const MEDIA = 'hello-mae-media';
 
